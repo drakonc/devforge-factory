@@ -106,6 +106,41 @@ devforge instalar-global
 
 Actualizar: `uv tool upgrade devforge-factory` y repite `devforge instalar-global` para refrescar los agentes. La skill se actualiza al reinstalar.
 
+## Ubuntu 24.04+ y 26.04: sandbox de Claude
+
+Ubuntu 26.04 trae `/etc/apparmor.d/bwrap-userns-restrict`, que apila los procesos hijos de `bwrap` en el perfil `unpriv_bwrap` y les niega `CAP_SYS_ADMIN`. Claude Code necesita un espacio de nombres de usuario **anidado** para su paso `apply-seccomp`, así que todo comando falla con:
+
+```
+apply-seccomp: write /proc/self/setgroups (nested userns is capability-restricted; caller must provide CAP_SYS_ADMIN): Permission denied
+```
+
+`bwrap` directo funciona, lo que despista. El perfil de distro es la causa. Para sustituirlo por el perfil que documenta Claude Code:
+
+```bash
+sudo mkdir -p /etc/apparmor.d/disable
+sudo ln -sf /etc/apparmor.d/bwrap-userns-restrict /etc/apparmor.d/disable/
+sudo apparmor_parser -R /etc/apparmor.d/bwrap-userns-restrict
+
+sudo tee /etc/apparmor.d/bwrap >/dev/null <<'EOF'
+abi <abi/4.0>,
+include <tunables/global>
+
+profile bwrap /usr/bin/bwrap flags=(unconfined) {
+  userns,
+  include if exists <local/bwrap>
+}
+EOF
+
+sudo apparmor_parser -r /etc/apparmor.d/bwrap
+sudo aa-status | grep -E 'bwrap|unpriv_bwrap'
+```
+
+Debe quedar solo `bwrap`; si aparece `unpriv_bwrap`, el perfil anterior sigue cargado. Reinicia Claude Code y comprueba `/sandbox`.
+
+Es un cambio con coste de seguridad: se permite que los hijos de `bwrap` conserven capacidades dentro del espacio de nombres. La alternativa conservadora es no usar el sandbox de Claude y ejecutar `devforge` desde una terminal normal, pero entonces `/factory` no delega.
+
+`enableWeakerNestedSandbox` no resuelve este caso: cambia la ruta y falla con `unshare(CLONE_NEWUSER): Invalid argument`.
+
 ## Credenciales
 
 La ingesta remota usa las integraciones conectadas a la sesión Claude; el CLI local no consulta Jira, GitHub ni correo y no requiere tokens API. No pegues tokens en solicitudes, YAML, argumentos, archivos de trabajo o logs. No se requiere push para crear y revisar trabajos.
