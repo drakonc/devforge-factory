@@ -2,7 +2,7 @@
 
 ## Límites
 
-`devforge_factory` es el núcleo local responsable de configuración, normalización, persistencia, transiciones, worktrees y Quality Gates aislados. `.claude/skills/factory/SKILL.md` dirige el flujo conversacional; cada rol tiene una definición Markdown independiente en `.claude/agents/`. La sesión Claude importa elementos de Azure Boards, correo, Jira y GitHub usando las integraciones conectadas disponibles; el núcleo consume temporalmente un archivo de staging ignorado y lo elimina tras crear el trabajo. El núcleo local no hace solicitudes HTTP a esos servicios ni lee tokens API. Cada proyecto tiene `.devforge/project.yaml` y trabajos JSON/Markdown bajo `.devforge/jobs/`.
+`devforge_factory` es el núcleo local responsable de configuración, normalización, persistencia, transiciones, worktrees y Quality Gates aislados. `.claude/skills/factory/SKILL.md` dirige el flujo conversacional; cada rol tiene una definición Markdown independiente en `.claude/agents/`. La sesión Claude importa elementos de Azure Boards, correo, Jira y GitHub usando las integraciones conectadas disponibles; el núcleo consume temporalmente un archivo de staging ignorado y lo elimina tras crear el trabajo. El núcleo local no hace solicitudes HTTP a esos servicios ni lee tokens API. Cada proyecto tiene `.devforge/project.yaml` y trabajos JSON/Markdown bajo `.devforge/jobs/`. El adaptador `openspec` importa un cambio con proposal, design, tasks y delta specs; al cerrar el trabajo valida, sincroniza y archiva el cambio mediante el CLI de OpenSpec.
 
 ```text
 Fuentes Claude conectadas / archivos / texto

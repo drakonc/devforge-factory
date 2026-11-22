@@ -41,7 +41,7 @@ def create_from(args) -> None:
     if args.file:
         raw_file_path = Path(args.file).expanduser()
         file_path = raw_file_path.resolve()
-        if source in {"email", "github", "jira", "azure"}:
+        if source in {"email", "github", "jira", "azure", "openspec"}:
             root, _ = config_for(Path.cwd())
             staging_path = root / ".devforge" / "import-staging"
             staging = staging_path.resolve()
@@ -166,6 +166,9 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("init", help="Prepara la fábrica en el proyecto actual")
     sub.add_parser("repo", help="Identifica el repositorio asociado a origin")
     sub.add_parser("documentos", help="Lista documentos candidatos bajo docs/")
+    openspec = sub.add_parser("openspec", help="Importa un cambio de OpenSpec como trabajo")
+    openspec.add_argument("change_id")
+    openspec.add_argument("--type", dest="branch_type", choices=("feature", "fix", "hotfix", "chore"), default="feature")
     create = sub.add_parser("hacer", help="Crea un trabajo desde texto, archivo o contenido importado por Claude")
     create.add_argument("request", nargs="?")
     source = create.add_mutually_exclusive_group()
@@ -205,6 +208,12 @@ def main() -> None:
                 print(board.claim_next(Path.cwd(), args.job_id))
             else:
                 board.release(Path.cwd(), args.job_id)
+        elif args.action == "openspec":
+            from .openspec import import_change
+
+            folder = import_change(Path.cwd(), args.change_id, args.branch_type)
+            print(f"Trabajo creado: {folder.name}")
+            print(f"Estado: queued | Revisa y planifica con `devforge plan {folder.name}`")
         elif args.action == "repo":
             print(repository_slug(Path.cwd()))
         elif args.action == "documentos":

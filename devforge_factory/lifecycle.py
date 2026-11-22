@@ -185,5 +185,10 @@ def close(folder, job):
     if acceptance(folder, read_job(folder)) != sha:
         raise FactoryError("La evidencia cambió después de la confirmación.")
     snapshot(folder, job)
+    archived = ""
+    if job.get("source") == "openspec":
+        from .openspec import archive_job
+
+        archived = "\n" + archive_job(folder.parents[2], folder, job)
     move(folder, job, "done", closed_at=now(), closed_sha=sha)
-    return f"Trabajo cerrado localmente en {sha}. No se modificó ninguna referencia remota."
+    return f"Trabajo cerrado localmente en {sha}. No se modificó ninguna referencia remota." + archived

@@ -4,7 +4,8 @@
 
 1. Instala Python 3.11+, Git, Bubblewrap (`bwrap`) y PyYAML 6. Los repositorios locales pueden usar `python3 -m pip install -e /ruta/a/devforge-factory`.
 2. Para leer PDF instala `pdftotext` (por ejemplo, `poppler-utils`). DOCX se lee con la biblioteca estándar.
-3. Comprueba `devforge --help`.
+3. Para importar cambios de OpenSpec y archivarlos al cerrar, instala el CLI `openspec` y ejecuta `openspec init` en el proyecto.
+4. Comprueba `devforge --help`.
 
 ## Claude Code
 

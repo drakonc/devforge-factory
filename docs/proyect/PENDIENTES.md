@@ -12,7 +12,8 @@ Estos puntos ya no se consideran faltantes de implementación:
 - Cola local con reservas, límite de concurrencia configurable y liberación automática de reservas caducadas según `reservation_ttl_hours`, además de un tablero HTML local con recarga periódica.
 - Tipos de rama `feature`, `fix`, `hotfix` y `chore`, con nombres derivados de la clave y el resumen.
 - Reconocimiento de URL de Azure Repos. La skill de `/factory` contempla la consulta de Azure Boards mediante el conector ya disponible en Claude.
-- Prueba de recorrido sintética con repositorio Azure SSH: 39 pruebas locales pasaron y `compileall` terminó correctamente en la última verificación registrada.
+- Prueba de recorrido sintética con repositorio Azure SSH: 52 pruebas locales pasaron y `compileall` terminó correctamente en la última verificación registrada.
+- Importación de cambios de OpenSpec con proposal, design, tasks y delta specs, y archivado con validación y sincronización al cerrar el trabajo.
 - Bloqueo por trabajo con `flock`, `O_NOFOLLOW` y permisos `0600`, y liberación de reservas caducadas al consultar la cola.
 
 La implementación de Azure no equivale todavía a una validación contra la organización real: no se hicieron llamadas remotas ni se verificaron permisos corporativos.

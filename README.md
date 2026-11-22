@@ -33,6 +33,12 @@ La acción auxiliar `devforge publicar ID` exige informes APTO ligados al mismo 
 
 Se revisaron [Software Factory Claude Code V1](https://github.com/zazencodes/zazencodes-season-3/tree/main/src/software-factory-claude-code) y [V2](https://github.com/zazencodes/zazencodes-season-3/tree/main/src/software-factory-claude-code-v2). V2 está bajo GPLv3. DevForge implementa su propio núcleo, flujo y redacción de agentes; no se copiaron archivos fuente de esas fábricas.
 
+## Cambios de OpenSpec
+
+`devforge openspec <cambio>` importa un cambio de `openspec/changes/<cambio>/` que tenga `proposal.md`, `design.md`, `tasks.md` y al menos un `specs/**/spec.md`. El trabajo guarda esos artefactos en su `request.md` y registra `document: openspec/changes/<cambio>`.
+
+Al ejecutar `devforge cerrar ID`, la fábrica valida el cambio con `openspec validate --strict`, sincroniza las delta specs y lo archiva con `openspec archive --yes`. Si la validación o el archivado fallan, el trabajo sigue en revisión. Requiere el CLI de OpenSpec instalado.
+
 ## Operar un backlog local
 
 | Acción | Resultado |

@@ -273,10 +273,10 @@ def init_project(path: Path) -> None:
     print(f"Configuración creada: {target}")
 
 
-def create_job(path: Path, source: str, text: str, key: str = "", *, document: str = "", branch_type: str = "feature") -> Path:
+def create_job(path: Path, source: str, text: str, key: str = "", *, document: str = "", branch_type: str = "feature", title: str = "") -> Path:
     root, config = config_for(path)
-    if source not in {"direct", "email", "jira", "github", "azure", "file"}:
-        raise FactoryError("Origen inválido; usa direct, email, jira, github, azure o file.")
+    if source not in {"direct", "email", "jira", "github", "azure", "openspec", "file"}:
+        raise FactoryError("Origen inválido; usa direct, email, jira, github, azure, openspec o file.")
     max_rounds = config.get("max_rounds", 3)
     if type(max_rounds) is not int or max_rounds < 1:
         raise FactoryError("max_rounds debe ser un entero positivo.")
@@ -293,6 +293,8 @@ def create_job(path: Path, source: str, text: str, key: str = "", *, document: s
         raise FactoryError("worktree_dir debe quedar dentro del repositorio para respetar el aislamiento del proyecto.")
     worktrees.mkdir(parents=True, exist_ok=True)
     normalized = normalize(source, text, key)
+    if title:
+        normalized["title"] = title[:180]
     job_key = key or f"DF-{uuid.uuid4().hex[:8].upper()}"
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,79}", job_key):
         raise FactoryError("El identificador de origen solo puede usar letras, números, punto, guion y guion bajo.")

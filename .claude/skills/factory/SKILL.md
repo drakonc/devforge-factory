@@ -42,6 +42,7 @@ Resuelve la entrada desde el repositorio en el que la persona abrió Claude. Un 
 | `/factory hacer Jira ABC-123` o URL Jira | Usa el Jira indicado y su conector de lectura. Con clave y conexión inequívocas, lee el ticket. Con proyecto Jira indicado pero sin ticket, lista candidatos de ese proyecto. Si hay dos sitios posibles, pide elegir el sitio. |
 | `/factory hacer docs` o «busca los requerimientos en docs» | Ejecuta `devforge documentos` en el proyecto. Presenta las rutas candidatas. Las notas históricas, comparaciones y archivos archivados solo se usan cuando la persona los señala. Si eligió un documento con varios requerimientos independientes, presenta sus títulos y registra el elegido. |
 | `/factory hacer docs/requisitos/busqueda.md` | Usa el archivo señalado mediante `devforge hacer --file` y la ruta literal. Conserva el documento original. También se admiten TXT, PDF y DOCX. |
+| «trabaja el cambio OpenSpec add-user-auth» o `/factory openspec add-user-auth` | Ejecuta `devforge openspec add-user-auth`. El trabajo incorpora proposal, design, tasks y las delta specs a `request.md`; no amplíes el alcance admitido por esas specs. |
 | `/factory agrega búsqueda por nombre` | Registra ese texto como solicitud directa, sin consultar servicios. Una referencia incidental a Jira, GitHub o docs dentro de la descripción no cambia el origen. |
 
 Un listado vacío se informa como tal. Un conector ausente o una consulta fallida se informa como fallo de acceso, sin presentarlo como una cola vacía. Si Git no identifica el proveedor, usa la referencia explícita a Jira o Boards, una ruta de `docs/` o el texto suministrado. Si solo se pidió la cola del repositorio, solicita la referencia que falte. Usa correo únicamente si la persona identifica expresamente un mensaje como origen. No explores otras cuentas o repositorios para completar una búsqueda.
@@ -99,6 +100,8 @@ Ejecuta `devforge ver` y resume IDs, estados, ramas y trabajo pendiente. No abra
 8. Presenta el resumen, los dictámenes, SHA, rama y base para decisión humana. La cola termina su intervención en ese punto. Mantén cualquier publicación o cierre remoto fuera del procesamiento de la cola. Para Azure entrega el worktree, la rama y la evidencia para la persona responsable de la PR. Una recomendación local no crea una PR ni cambia el estado del elemento en Boards.
 
 Cuando la persona quiera dar por terminado un trabajo aprobado, usa `devforge cerrar ID`. La persona introduce la confirmación exacta en terminal. Registra como resultado el cierre local del SHA revisado. Si la recomendación es ESCALAR, presenta la decisión pendiente.
+
+Si el trabajo proviene de OpenSpec, `cerrar` valida con `--strict`, sincroniza las delta specs y archiva el cambio con el CLI `openspec` antes de marcarlo `done`. Si esa operación falla, el trabajo permanece en revisión y se muestra el error; no lo cierres a mano. Cuando el flujo lo permita, integra la rama en la base antes de cerrar: el informe avisa si el SHA revisado aún no está en la base.
 
 ## Parar (`parar`)
 

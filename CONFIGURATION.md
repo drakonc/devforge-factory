@@ -17,7 +17,7 @@ La inicialización elige `develop` si existe localmente. Después considera la r
 
 Configura `test_command` con el comando real del proyecto como lista de argumentos. Las pruebas se ejecutan con Bubblewrap sin red y el gate falla si faltan el comando o el aislamiento. Incluye en `test_env` solo variables necesarias para pruebas.
 
-El origen se elige en cada solicitud. Azure Boards, GitHub y Jira usan los conectores disponibles en la sesión Claude. `devforge repo` identifica el repositorio de GitHub o Azure Repos asociado a origin. `devforge documentos` descubre Markdown, TXT, PDF y DOCX bajo `docs/`. El historial de `docs/requerimientio/` se conserva fuera del listado automático y se puede importar por ruta explícita. Al importar un documento se registra su ruta y se conserva el original.
+El origen se elige en cada solicitud. Azure Boards, GitHub y Jira usan los conectores disponibles en la sesión Claude. Los cambios de OpenSpec se importan desde `openspec/changes/<cambio>/` con `devforge openspec` y se validan, sincronizan y archivan al cerrar el trabajo; eso requiere el CLI `openspec`. `devforge repo` identifica el repositorio de GitHub o Azure Repos asociado a origin. `devforge documentos` descubre Markdown, TXT, PDF y DOCX bajo `docs/`. El historial de `docs/requerimientio/` se conserva fuera del listado automático y se puede importar por ruta explícita. Al importar un documento se registra su ruta y se conserva el original.
 
 ## Capacidad y rondas
 
