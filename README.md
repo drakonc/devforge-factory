@@ -6,7 +6,7 @@ Los agentes y el orquestador están definidos en Markdown. Python implementa el 
 
 ## Inicio rápido
 
-Requiere Python 3.11 o superior, Git, Bubblewrap (`bwrap`), Claude Code y PyYAML 6. Instala el CLI desde este repositorio con `python3 -m pip install -e .`. Para usar `/factory` en todos tus proyectos sin copiar archivos, ejecuta `./scripts/instalar-global.sh`; después basta `devforge init` en cada repositorio y abrir Claude Code allí. Consulta [INSTALL.md](INSTALL.md).
+Requiere Python 3.11 o superior, Git, Bubblewrap (`bwrap`), Claude Code y PyYAML 6. Instala el CLI desde este repositorio con `python3 -m pip install -e .`. Para usar `/factory` en todos tus proyectos sin copiar archivos, ejecuta `./scripts/instalar-global.sh`; después abre Claude Code en cada repositorio y ejecuta `/factory init`. Consulta [INSTALL.md](INSTALL.md).
 
 El proyecto debe tener la rama base configurada (se prefiere `develop` si existe) y local. Configura `test_command` en `.devforge/project.yaml` como lista de argumentos, por ejemplo `["python3", "-m", "unittest", "discover"]`. Los trabajos se guardan en `.devforge/jobs/`; sus worktrees quedan en `.devforge/worktrees/`, ignorados por Git. Los gates corren sin red con el filesystem de solo lectura, salvo el worktree.
 
@@ -43,6 +43,7 @@ Al ejecutar `devforge cerrar ID`, la fábrica valida el cambio con `openspec val
 
 | Acción | Resultado |
 | --- | --- |
+| `/factory init` | Prepara el repositorio y pregunta rama base, comando de pruebas, variables, rondas, concurrencia, reservas y gates. |
 | `/factory hacer Azure AB-123` | Usa el conector Azure de la sesión para leer el elemento en la organización y el proyecto indicados. |
 | `devforge hacer "Corregir total" --type fix` | Crea el trabajo en una rama de corrección. También se admiten feature, hotfix y chore. |
 | `devforge cola` | Lista los trabajos ordenados por creación, sus reservas y libera las caducadas. |

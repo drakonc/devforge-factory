@@ -26,10 +26,14 @@ for agent in "$repo"/.claude/agents/devforge-*.md; do
 done
 
 if [ "${SKIP_CLI:-0}" != "1" ] && ! command -v devforge >/dev/null 2>&1; then
-  if command -v pipx >/dev/null 2>&1; then
+  if command -v uv >/dev/null 2>&1; then
+    uv tool install --editable "$repo"
+  elif command -v pipx >/dev/null 2>&1; then
     pipx install --editable "$repo"
+  elif python3 -m pip --version >/dev/null 2>&1; then
+    python3 -m pip install --user -e "$repo"
   else
-    echo "CLI pendiente: instala con 'python3 -m pip install --user -e $repo' o pipx." >&2
+    echo "CLI pendiente: instala con 'uv tool install --editable $repo' (o pipx, o python3-pip)." >&2
   fi
 fi
 

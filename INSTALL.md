@@ -2,7 +2,7 @@
 
 ## Núcleo
 
-1. Instala Python 3.11+, Git, Bubblewrap (`bwrap`) y PyYAML 6. Los repositorios locales pueden usar `python3 -m pip install -e /ruta/a/devforge-factory`.
+1. Instala Python 3.11+, Git, Bubblewrap (`bwrap`) y PyYAML 6. Para desarrollo usa un entorno virtual: `uv venv && uv pip install --editable .` (y ejecuta `.venv/bin/devforge`). Si prefieres el `pip` del sistema y no existe, instala antes `python3-pip`; en equipos con `uv` también sirve `uv tool install --editable /ruta/a/devforge-factory`.
 2. Para leer PDF instala `pdftotext` (por ejemplo, `poppler-utils`). DOCX se lee con la biblioteca estándar.
 3. Para importar cambios de OpenSpec y archivarlos al cerrar, instala el CLI `openspec` y ejecuta `openspec init` en el proyecto.
 4. Comprueba `devforge --help`.
@@ -33,13 +33,13 @@ cp /ruta/devforge-factory/.claude/agents/devforge-*.md ~/.claude/agents/
 
 ## Por proyecto
 
-Cada repositorio conserva su configuración en `.devforge/project.yaml`:
+Cada repositorio conserva su configuración en `.devforge/project.yaml`. Desde Claude Code:
 
-```bash
-devforge init
+```text
+/factory init
 ```
 
-Ajusta `base_branch` y `test_command`; el resto tiene valores por defecto. Puedes commitear `.devforge/project.yaml` para compartirlo con el equipo. Si prefieres aislar los agentes por repositorio, copia `.claude/skills/factory/` y `.claude/agents/` al proyecto en lugar de usar la instalación global.
+La fábrica ejecuta `devforge init`, detecta la rama base y el comando de pruebas, y **pregunta** rama, `test_command`, `test_env`, `max_rounds`, `concurrency`, `reservation_ttl_hours` y gates antes de escribir el YAML. Si prefieres valores por defecto sin preguntas, ejecuta `devforge init` directamente. Puedes commitear `.devforge/project.yaml` para compartirlo con el equipo. Si prefieres aislar los agentes por repositorio, copia `.claude/skills/factory/` y `.claude/agents/` al proyecto en lugar de usar la instalación global.
 
 Antes de delegar, confirma en Claude Code que `/sandbox` indica sandbox activo y que `/status` carga las restricciones.
 

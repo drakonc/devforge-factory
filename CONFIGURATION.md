@@ -1,6 +1,6 @@
 # Configuración del proyecto
 
-Desde el repositorio de destino, ejecuta `devforge init`. Consulta `.devforge/project.yaml` para ajustar la rama y el comando de pruebas. Si existe configuración previa se conserva. Las antiguas claves de perfil o habilitación de conectores se ignoran y los trabajos existentes se pueden seguir consultando.
+Desde el repositorio de destino, ejecuta `/factory init` en Claude Code: la fábrica ejecuta `devforge init` y pregunta rama base, `test_command`, `test_env`, `max_rounds`, `concurrency`, `reservation_ttl_hours` y gates antes de escribir el YAML. `devforge init` a secas aplica los valores por defecto. Consulta `.devforge/project.yaml` para ajustarlos después. Si existe configuración previa se conserva. Las antiguas claves de perfil o habilitación de conectores se ignoran y los trabajos existentes se pueden seguir consultando.
 
 ```yaml
 base_branch: develop

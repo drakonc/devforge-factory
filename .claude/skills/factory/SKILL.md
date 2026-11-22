@@ -18,7 +18,7 @@ Al recibir solo `/factory`, muestra el menú. Interpreta `/factory <solicitud>` 
 5. **revisar**: ejecutar gates y revisiones independientes.
 6. **parar**: pausar el trabajo y conservar estado.
 
-`publicar` es una operación posterior a `revisar`; no se presenta como acción ordinaria del menú. `openspec` es una entrada auxiliar de `hacer`: `/factory openspec <cambio>` importa ese cambio sin pasar por el menú.
+`publicar` es una operación posterior a `revisar`; no se presenta como acción ordinaria del menú. `openspec` es una entrada auxiliar de `hacer`: `/factory openspec <cambio>` importa ese cambio sin pasar por el menú. `init` es la preparación del repositorio: `/factory init` ejecuta `devforge init` y propone el comando de pruebas. Ninguna de las tres aparece numerada.
 
 ## Reglas que aplican en todas las acciones
 
@@ -29,6 +29,25 @@ Al recibir solo `/factory`, muestra el menú. Interpreta `/factory <solicitud>` 
 - Asegura que Claude Code cargó las restricciones relevantes con `/status` y que su `/sandbox` informa activo antes de `seguir` o revisar código mediante agentes. No asumas que instalar una integración equivale a autorización de lectura o escritura.
 - El trabajo ocurre en el worktree guardado en `job.json`. El checkout principal pertenece a la persona. Los agentes reciben el worktree por ruta explícita y deben limitar allí sus cambios.
 - Si una integración conectada no está disponible para esta sesión, pide el archivo, texto o referencia exacta a la persona; no sustituyas el conector por llamadas HTTP, tokens locales o comandos de red.
+- Si falta `.devforge/project.yaml` o una opción impide operar, no inventes `base_branch`, `test_command` ni gates: propón `/factory init` y espera confirmación.
+
+## Inicializar el proyecto (`init`)
+
+Prepara un repositorio para la fábrica. Se ejecuta antes del primer trabajo y también cuando una acción falla porque falta `.devforge/project.yaml`.
+
+1. Verifica que estás en un repositorio Git con al menos un commit y que `devforge` responde. Si el CLI no está instalado, indica cómo instalarlo y detente; no instales dependencias sin aprobación.
+2. Si ya existe `.devforge/project.yaml`, no lo sobrescribas: muestra los valores actuales y ofrece revisarlos. Solo edita lo que la persona confirme.
+3. Si no existe, ejecuta `devforge init`.
+4. Haz las preguntas de configuración en una sola tanda, mostrando como opción por defecto el valor detectado. Usa la herramienta de preguntas de la sesión si está disponible; si no, pregunta en el chat.
+   - **Rama base local**: detectada (`develop`, luego `origin/HEAD`, luego la rama actual). Debe existir localmente.
+   - **Comando de pruebas**: lista de argumentos. Detecta el real en `package.json` (`scripts.test`), `pyproject.toml`, `*.sln`/`*.csproj`, `composer.json`, `angular.json`, `go.mod` o `Cargo.toml`. No inventes scripts ni opciones. Si no hay, deja `[]` y avisa de que `tests-configured` fallará.
+   - **Variables para pruebas** (`test_env`): ninguna por defecto. Solo nombres; nunca valores ni credenciales.
+   - **Rondas máximas** (`max_rounds`, 3), **trabajos simultáneos** (`concurrency`, 2) y **horas de reserva** (`reservation_ttl_hours`, 12).
+   - **Quality Gates**: los tres por defecto. Si se quita `tests-configured` o `human-approval`, explica exactamente qué deja de verificarse.
+   No preguntes por Jira, Azure ni GitHub: el origen se elige en cada solicitud.
+5. Escribe los valores confirmados en `.devforge/project.yaml` con la herramienta de edición, conservando las claves y comentarios existentes. Muestra el YAML final.
+6. Comprueba dependencias sin instalar: `bwrap` (gates), `gh` (solo publicar en GitHub) y `openspec` (solo si habrá cambios OpenSpec). Informa qué falta y el comando de instalación del sistema, sin ejecutarlo.
+7. Ejecuta `devforge repo` y, si existe `docs/`, `devforge documentos`. Resume configuración, dependencias y el siguiente paso (`hacer`).
 
 ## Importar una solicitud (`hacer`)
 
