@@ -26,6 +26,10 @@
     "enabled": true,
     "failIfUnavailable": true,
     "allowUnsandboxedCommands": false,
+    "excludedCommands": [
+      "devforge",
+      "devforge *"
+    ],
     "filesystem": {
       "denyRead": [
         "./.env",

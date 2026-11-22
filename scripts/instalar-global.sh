@@ -38,7 +38,10 @@ if [ "${SKIP_CLI:-0}" != "1" ] && ! command -v devforge >/dev/null 2>&1; then
 fi
 
 if [ -f "$claude_dir/settings.json" ]; then
-  echo "Revisa y combina $repo/.claude/settings.json en $claude_dir/settings.json (no se sobrescribe)."
+  # Se conserva lo existente y solo se añade lo que falta de la plantilla.
+  # -P: no anteponer el directorio actual a sys.path (evita cargar módulos ajenos).
+  PYTHONPATH="$repo" python3 -P -c 'import sys; from pathlib import Path; from devforge_factory.install import _merge_settings; print("Settings:", _merge_settings(Path(sys.argv[1]), Path(sys.argv[2])))' \
+    "$repo/.claude/settings.json" "$claude_dir/settings.json"
 else
   cp "$repo/.claude/settings.json" "$claude_dir/settings.json"
   echo "Settings de referencia copiados a $claude_dir/settings.json."

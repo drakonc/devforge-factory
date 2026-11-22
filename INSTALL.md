@@ -22,7 +22,7 @@ El script:
 1. Instala el CLI con `pipx` si `devforge` no existe.
 2. Enlaza la skill en `~/.claude/skills/factory` (symlink: los cambios del repo se ven al instante).
 3. Copia los agentes `devforge-*.md` a `~/.claude/agents/`.
-4. Copia `.claude/settings.json` a `~/.claude/settings.json` solo si no existe; si existe, avisa para combinarlo.
+4. Copia `.claude/settings.json` a `~/.claude/settings.json` solo si no existe; si existe, lo combina: conserva todos tus valores y solo añade las claves y elementos de lista que falten (las entradas con `name` o `path` se comparan por ese campo). Si tu archivo no es JSON válido, no se toca. `devforge` necesita correr fuera del sandbox de Claude para crear worktrees; sus tests se aíslan con su propio `bwrap`.
 
 Repite el script cuando actualices los agentes. La skill se actualiza sola por el symlink. Usa `CLAUDE_CONFIG_DIR` si tu configuración de Claude vive en otra ruta.
 
