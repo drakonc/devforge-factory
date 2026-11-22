@@ -29,6 +29,12 @@ El proyecto debe tener la rama base configurada (se prefiere `develop` si existe
 
 La acción auxiliar `devforge publicar ID` exige informes APTO ligados al mismo SHA, Quality Gates aprobados y una confirmación escrita con la URL remota saneada. Solo crea PR borrador; no fusiona ni despliega. El comando no se invoca sin aprobación humana explícita. Consulta [INSTALL.md](INSTALL.md), [CONFIGURATION.md](CONFIGURATION.md), [ARCHITECTURE.md](ARCHITECTURE.md) y [SECURITY.md](SECURITY.md).
 
+## Estado y licencia
+
+Beta. Las 57 pruebas cubren estado, worktrees, gates, colas, OpenSpec y publicación; la integración con conectores y el aislamiento de agentes aún requieren validación en cada entorno.
+
+MIT. Consulta [LICENSE](LICENSE).
+
 ## Referencias de diseño
 
 Se revisaron [Software Factory Claude Code V1](https://github.com/zazencodes/zazencodes-season-3/tree/main/src/software-factory-claude-code) y [V2](https://github.com/zazencodes/zazencodes-season-3/tree/main/src/software-factory-claude-code-v2). V2 está bajo GPLv3. DevForge implementa su propio núcleo, flujo y redacción de agentes; no se copiaron archivos fuente de esas fábricas.

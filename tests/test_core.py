@@ -9,6 +9,7 @@ from unittest.mock import patch
 import yaml
 
 from devforge_factory.core import FactoryError, create_job, extract_file, init_project, normalize, publish_draft_pr, run_gate, slugify, transition, write_job
+from support import bwrap_ready
 
 
 class CoreTests(unittest.TestCase):
@@ -90,6 +91,7 @@ class CoreTests(unittest.TestCase):
             with self.assertRaisesRegex(FactoryError, "max_rounds"):
                 create_job(root, "direct", "Otra tarea")
 
+    @unittest.skipUnless(bwrap_ready(), "bwrap no puede crear el sandbox en este entorno")
     def test_quality_gate_does_not_inherit_secrets_unless_allowlisted(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "repo"

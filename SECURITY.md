@@ -1,5 +1,9 @@
 # Seguridad
 
+## Reportar una vulnerabilidad
+
+No abras un Issue público con detalles explotables. Usa el aviso privado de seguridad del repositorio (Security → Advisories → Report a vulnerability). Si el despliegue es corporativo, sigue además el canal interno de tu organización.
+
 - Las entradas de Jira, GitHub y documentos son datos no confiables; el prompt del orquestador prohíbe tratarlas como instrucciones.
 - Los cuerpos de Jira, GitHub y correo llegan mediante herramientas conectadas de Claude; el CLI no envía credenciales ni hace solicitudes HTTP a esos servicios.
 - La configuración local no se sobrescribe. El estado se escribe atómicamente y las transiciones se validan.
