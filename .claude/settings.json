@@ -48,31 +48,100 @@
     },
     "credentials": {
       "envVars": [
-        "GITHUB_TOKEN",
-        "GH_TOKEN",
-        "JIRA_API_TOKEN",
-        "JIRA_USER_EMAIL",
-        "ANTHROPIC_API_KEY",
-        "OPENAI_API_KEY",
-        "NPM_TOKEN",
-        "GITLAB_TOKEN",
-        "CLOUDFLARE_API_TOKEN",
-        "DOCKER_PASSWORD",
-        "AWS_ACCESS_KEY_ID",
-        "AWS_SECRET_ACCESS_KEY",
-        "AZURE_CLIENT_SECRET",
-        "GOOGLE_APPLICATION_CREDENTIALS"
+        {
+          "name": "GITHUB_TOKEN",
+          "mode": "deny"
+        },
+        {
+          "name": "GH_TOKEN",
+          "mode": "deny"
+        },
+        {
+          "name": "JIRA_API_TOKEN",
+          "mode": "deny"
+        },
+        {
+          "name": "JIRA_USER_EMAIL",
+          "mode": "deny"
+        },
+        {
+          "name": "ANTHROPIC_API_KEY",
+          "mode": "deny"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "mode": "deny"
+        },
+        {
+          "name": "NPM_TOKEN",
+          "mode": "deny"
+        },
+        {
+          "name": "GITLAB_TOKEN",
+          "mode": "deny"
+        },
+        {
+          "name": "CLOUDFLARE_API_TOKEN",
+          "mode": "deny"
+        },
+        {
+          "name": "DOCKER_PASSWORD",
+          "mode": "deny"
+        },
+        {
+          "name": "AWS_ACCESS_KEY_ID",
+          "mode": "deny"
+        },
+        {
+          "name": "AWS_SECRET_ACCESS_KEY",
+          "mode": "deny"
+        },
+        {
+          "name": "AZURE_CLIENT_SECRET",
+          "mode": "deny"
+        },
+        {
+          "name": "GOOGLE_APPLICATION_CREDENTIALS",
+          "mode": "deny"
+        }
       ],
       "files": [
-        { "path": "~/.ssh", "mode": "deny" },
-        { "path": "~/.aws", "mode": "deny" },
-        { "path": "~/.config/gh", "mode": "deny" },
-        { "path": "~/.config/gcloud", "mode": "deny" },
-        { "path": "~/.kube", "mode": "deny" },
-        { "path": "~/.docker", "mode": "deny" },
-        { "path": "~/.azure", "mode": "deny" },
-        { "path": "~/.config/opencode", "mode": "deny" },
-        { "path": "~/.codex", "mode": "deny" }
+        {
+          "path": "~/.ssh",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.aws",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.config/gh",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.config/gcloud",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.kube",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.docker",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.azure",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.config/opencode",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.codex",
+          "mode": "deny"
+        }
       ]
     }
   }
