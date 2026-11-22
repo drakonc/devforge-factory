@@ -2,6 +2,7 @@
 
 from contextlib import contextmanager
 import fcntl
+import os
 from pathlib import Path
 import re
 
@@ -16,12 +17,18 @@ ARCHIVED = ("intake.md", "plan.md", "build.md", *REPORTS)
 
 @contextmanager
 def job_lock(folder):
-    with (folder / ".lifecycle.lock").open("a") as lock:
+    path = folder / ".lifecycle.lock"
+    if path.is_symlink():
+        raise FactoryError("El bloqueo del trabajo no puede ser un enlace simbólico.")
+    lock = os.open(path, os.O_NOFOLLOW | os.O_CREAT | os.O_RDWR, 0o600)
+    try:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
             raise FactoryError("Otro proceso está operando sobre este trabajo.") from exc
         yield
+    finally:
+        os.close(lock)
 
 
 def move(folder, job, status, **fields):

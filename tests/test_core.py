@@ -6,6 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import yaml
+
 from devforge_factory.core import FactoryError, create_job, extract_file, init_project, normalize, publish_draft_pr, run_gate, slugify, transition, write_job
 
 
@@ -71,6 +73,22 @@ class CoreTests(unittest.TestCase):
             self.assertEqual(record["base_branch"], "develop")
             self.assertEqual(record["test_command"], [])
             self.assertEqual(record["test_env"], [])
+
+    def test_create_job_rejects_invalid_branch_type_and_round_budget(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "repo"
+            root.mkdir()
+            subprocess.run(["git", "init", "-b", "develop"], cwd=root, check=True, capture_output=True)
+            subprocess.run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "--allow-empty", "-m", "base"], cwd=root, check=True, capture_output=True)
+            init_project(root)
+            with self.assertRaisesRegex(FactoryError, "Tipo de rama"):
+                create_job(root, "direct", "Tarea", branch_type="release")
+            config = root / ".devforge" / "project.yaml"
+            settings = yaml.safe_load(config.read_text(encoding="utf-8"))
+            settings["max_rounds"] = 0
+            config.write_text(yaml.safe_dump(settings), encoding="utf-8")
+            with self.assertRaisesRegex(FactoryError, "max_rounds"):
+                create_job(root, "direct", "Otra tarea")
 
     def test_quality_gate_does_not_inherit_secrets_unless_allowlisted(self):
         with tempfile.TemporaryDirectory() as temp:

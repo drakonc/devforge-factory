@@ -21,7 +21,7 @@ El origen se elige en cada solicitud. Azure Boards, GitHub y Jira usan los conec
 
 ## Capacidad y rondas
 
-`concurrency` limita las reservas simultáneas de la cola local (2 por defecto). `max_rounds` fija el número máximo de rondas de construcción y revisión de cada trabajo nuevo (3 por defecto). En repositorios inicializados anteriormente se aplican estos valores cuando faltan las claves. Las reservas pertenecen al repositorio, sobreviven al cierre del proceso y se liberan con `devforge liberar ID`. Antes de recuperar una reserva comprueba que su agente haya terminado. El límite gobierna la cola cooperativa y los trabajos iniciados a mano quedan bajo coordinación del operador.
+`concurrency` limita las reservas simultáneas de la cola local (2 por defecto). `max_rounds` fija el número máximo de rondas de construcción y revisión de cada trabajo nuevo (3 por defecto). `reservation_ttl_hours` (12 por defecto) caduca las reservas abandonadas: al consultar o reservar, el núcleo libera las que superaron ese plazo y `devforge cola` informa cuántas liberó. Las reservas siguen liberándose a mano con `devforge liberar ID`; antes de recuperar una reserva comprueba que su agente haya terminado. En repositorios inicializados anteriormente se aplican estos valores cuando faltan las claves. El límite gobierna la cola cooperativa y los trabajos iniciados a mano quedan bajo coordinación del operador.
 
 GitHub se identifica por propietario/repositorio. Para Azure DevOps Services, `devforge repo` normaliza el remoto HTTPS de dev.azure.com o SSH v3 de ssh.dev.azure.com a la URL HTTPS de Azure Repos. La consulta de Boards se limita a la organización y proyecto elegidos en Claude. La publicación automática de PR sigue disponible solo en GitHub.
 

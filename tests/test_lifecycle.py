@@ -57,6 +57,7 @@ class LifecycleTests(unittest.TestCase):
         with patch("builtins.input", return_value=""):
             with self.assertRaisesRegex(FactoryError, "cancelado"):
                 lifecycle.close(self.folder, self.job)
+        self.assertEqual(read_job(self.folder)["status"], "review")
         with patch("builtins.input", return_value=f"CERRAR DF-1 {sha[:12]}"):
             lifecycle.close(self.folder, self.job)
         self.assertEqual(read_job(self.folder)["status"], "done")
@@ -70,3 +71,25 @@ class LifecycleTests(unittest.TestCase):
         lifecycle.rework(self.folder, self.job)
         self.assertIsNone(self.job["reviewed_sha"])
         self.assertFalse((self.folder / "quality-gates.md").exists())
+
+    def test_second_holder_cannot_lock_the_job(self):
+        with lifecycle.job_lock(self.folder):
+            with self.assertRaisesRegex(FactoryError, "Otro proceso"):
+                with lifecycle.job_lock(self.folder):
+                    pass
+
+    def test_lock_symlink_is_rejected(self):
+        outside = self.root / "outside.lock"
+        outside.write_text("x", encoding="utf-8")
+        (self.folder / ".lifecycle.lock").symlink_to(outside)
+        with self.assertRaisesRegex(FactoryError, "enlace simbólico"):
+            with lifecycle.job_lock(self.folder):
+                pass
+
+    def test_rework_after_publication_is_blocked(self):
+        self.gate(True)
+        job = read_job(self.folder)
+        job["pull_request"] = "https://github.com/org/repo/pull/1"
+        write_job(self.folder, job)
+        with self.assertRaisesRegex(FactoryError, "publicar"):
+            lifecycle.rework(self.folder, job)

@@ -39,9 +39,9 @@ Se revisaron [Software Factory Claude Code V1](https://github.com/zazencodes/zaz
 | --- | --- |
 | `/factory hacer Azure AB-123` | Usa el conector Azure de la sesión para leer el elemento en la organización y el proyecto indicados. |
 | `devforge hacer "Corregir total" --type fix` | Crea el trabajo en una rama de corrección. También se admiten feature, hotfix y chore. |
-| `devforge cola` | Lista los trabajos ordenados por creación y sus reservas. |
+| `devforge cola` | Lista los trabajos ordenados por creación, sus reservas y libera las caducadas. |
 | `/factory procesar cola` | Coordina los trabajos ya admitidos en la cola local con las plazas disponibles de la sesión. |
-| `devforge dashboard` | Genera una instantánea HTML local con estado, ronda, origen y reserva de cada trabajo. Ejecuta otra vez para actualizarla. |
+| `devforge dashboard` | Genera una instantánea HTML local con estado, ronda, origen y reserva de cada trabajo. La página se recarga cada 5 segundos; vuelve a ejecutar el comando para regenerar el contenido. |
 | `devforge cerrar ID` | Cierra localmente un trabajo revisado tras la decisión humana. El cierre no equivale a una fusión del código. |
 
 Usa `devforge tomar` para reservar un trabajo pendiente y `devforge liberar ID` para devolver su plaza. Una sesión interrumpida conserva sus reservas para inspección. En Azure Repos el equipo conserva la publicación de PR y las políticas de rama en Azure DevOps.

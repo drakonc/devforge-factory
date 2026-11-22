@@ -8,3 +8,4 @@ test_command: []
 test_env: []
 max_rounds: 3
 concurrency: 2
+reservation_ttl_hours: 12
