@@ -51,6 +51,61 @@ Los worktrees se crean en `.devforge/worktrees/`, ignorado por Git. Los Quality 
 
 Para comprobar la instalación abre Claude en el proyecto y escribe `/factory hacer docs`. Para ver sus issues abiertas usa `/factory hacer`.
 
+## Otra máquina sin copiar el repositorio
+
+El wheel incluye el CLI, la skill y los 9 agentes. En la máquina de destino basta instalar el paquete y ejecutar una vez:
+
+```bash
+devforge instalar-global
+```
+
+Eso copia la skill a `~/.claude/skills/factory`, los agentes a `~/.claude/agents/` y los settings solo si no existen.
+
+### Desde un repositorio interno (Azure Repos)
+
+```bash
+uv tool install "git+https://dev.azure.com/ORG/PROYECTO/_git/devforge-factory@v0.1.0"
+devforge instalar-global
+```
+
+Usa el credential manager de Git para autenticar; no pegues un PAT en el comando. Versión por tag para que la instalación sea reproducible.
+
+### Desde un feed PyPI interno (Azure Artifacts)
+
+En una máquina con acceso al feed:
+
+```bash
+uv build --wheel
+uv publish --publish-url https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED/pypi/upload dist/*
+```
+
+En la máquina de destino:
+
+```bash
+uv tool install devforge-factory==0.1.0 --index https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED/pypi/simple/
+devforge instalar-global
+```
+
+El feed debe tener también PyYAML. Configura las credenciales con el gestor de secretos de uv o el credential helper; nunca en la línea de comandos.
+
+### Desde un wheel compartido
+
+```bash
+uv tool install /ruta/compartida/devforge_factory-0.1.0-py3-none-any.whl
+devforge instalar-global
+```
+
+### Sin red (air-gapped)
+
+Descarga el wheel de DevForge y el de PyYAML en una máquina conectada, cópialos juntos y:
+
+```bash
+uv tool install --no-index --find-links ./dist devforge-factory==0.1.0
+devforge instalar-global
+```
+
+Actualizar: `uv tool upgrade devforge-factory` y repite `devforge instalar-global` para refrescar los agentes. La skill se actualiza al reinstalar.
+
 ## Credenciales
 
 La ingesta remota usa las integraciones conectadas a la sesión Claude; el CLI local no consulta Jira, GitHub ni correo y no requiere tokens API. No pegues tokens en solicitudes, YAML, argumentos, archivos de trabajo o logs. No se requiere push para crear y revisar trabajos.

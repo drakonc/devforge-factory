@@ -166,6 +166,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = result.add_subparsers(dest="action")
     sub.add_parser("init", help="Prepara la fábrica en el proyecto actual")
+    sub.add_parser("instalar-global", help="Instala la skill y los agentes en la configuración del usuario")
     sub.add_parser("repo", help="Identifica el repositorio asociado a origin")
     sub.add_parser("documentos", help="Lista documentos candidatos bajo docs/")
     openspec = sub.add_parser("openspec", help="Importa un cambio de OpenSpec como trabajo")
@@ -210,6 +211,10 @@ def main() -> None:
                 print(board.claim_next(Path.cwd(), args.job_id))
             else:
                 board.release(Path.cwd(), args.job_id)
+        elif args.action == "instalar-global":
+            from .install import install_global
+
+            print(install_global())
         elif args.action == "openspec":
             from .openspec import import_change
 
