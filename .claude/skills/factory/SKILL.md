@@ -1,6 +1,6 @@
 ---
 name: factory
-description: Coordina la fábrica de software del repositorio actual. Admite issues de GitHub, elementos de Azure Boards, tickets Jira, texto y requerimientos en docs, y permite planificar, implementar, revisar y reanudar trabajos.
+description: Coordina la fábrica de software del repositorio actual. Admite issues de GitHub, elementos de Azure Boards, tickets Jira, cambios de OpenSpec, texto y requerimientos en docs, y permite planificar, implementar, revisar y reanudar trabajos.
 ---
 
 # DevForge Factory
@@ -18,7 +18,7 @@ Al recibir solo `/factory`, muestra el menú. Interpreta `/factory <solicitud>` 
 5. **revisar**: ejecutar gates y revisiones independientes.
 6. **parar**: pausar el trabajo y conservar estado.
 
-`publicar` es una operación posterior a `revisar`; no se presenta como acción ordinaria del menú.
+`publicar` es una operación posterior a `revisar`; no se presenta como acción ordinaria del menú. `openspec` es una entrada auxiliar de `hacer`: `/factory openspec <cambio>` importa ese cambio sin pasar por el menú.
 
 ## Reglas que aplican en todas las acciones
 
