@@ -30,12 +30,13 @@ Al recibir solo `/factory`, muestra el menú. Interpreta `/factory <solicitud>` 
 - El trabajo ocurre en el worktree guardado en `job.json`. El checkout principal pertenece a la persona. Los agentes reciben el worktree por ruta explícita y deben limitar allí sus cambios.
 - Si una integración conectada no está disponible para esta sesión, pide el archivo, texto o referencia exacta a la persona; no sustituyas el conector por llamadas HTTP, tokens locales o comandos de red.
 - Si falta `.devforge/project.yaml` o una opción impide operar, no inventes `base_branch`, `test_command` ni gates: propón `/factory init` y espera confirmación.
+- Antes de la primera acción de una sesión, comprueba `devforge --version`. Si falla, aplica «Si `devforge` no está instalado» y no simules estado, gates ni worktrees.
 
 ## Inicializar el proyecto (`init`)
 
 Prepara un repositorio para la fábrica. Se ejecuta antes del primer trabajo y también cuando una acción falla porque falta `.devforge/project.yaml`.
 
-1. Verifica que estás en un repositorio Git con al menos un commit y que `devforge` responde. Si el CLI no está instalado, indica cómo instalarlo y detente; no instales dependencias sin aprobación.
+1. Verifica que estás en un repositorio Git con al menos un commit y que `devforge --version` responde. Si el CLI no está instalado, aplica **CLI faltante** y no continúes hasta resolverlo.
 2. Si ya existe `.devforge/project.yaml`, no lo sobrescribas: muestra los valores actuales y ofrece revisarlos. Solo edita lo que la persona confirme.
 3. Si no existe, ejecuta `devforge init`.
 4. Haz las preguntas de configuración en una sola tanda, mostrando como opción por defecto el valor detectado. Usa la herramienta de preguntas de la sesión si está disponible; si no, pregunta en el chat.
@@ -48,6 +49,19 @@ Prepara un repositorio para la fábrica. Se ejecuta antes del primer trabajo y t
 5. Escribe los valores confirmados en `.devforge/project.yaml` con la herramienta de edición, conservando las claves y comentarios existentes. Muestra el YAML final.
 6. Comprueba dependencias sin instalar: `bwrap` (gates), `gh` (solo publicar en GitHub) y `openspec` (solo si habrá cambios OpenSpec). Informa qué falta y el comando de instalación del sistema, sin ejecutarlo.
 7. Ejecuta `devforge repo` y, si existe `docs/`, `devforge documentos`. Resume configuración, dependencias y el siguiente paso (`hacer`).
+
+### Si `devforge` no está instalado
+
+Sin el CLI no hay estado, worktrees ni gates: no presentes la fábrica como operativa.
+
+1. Pide la ruta del repositorio de DevForge si no la conoces.
+2. Propón una instalación y espera aprobación antes de ejecutarla:
+   - `uv tool install --editable /ruta/devforge-factory` si `uv` existe.
+   - `/ruta/devforge-factory/scripts/instalar-global.sh`, que detecta uv, pipx o pip.
+   - `pipx install --editable /ruta/devforge-factory`.
+   - Último recurso: `python3 -m pip install --user -e /ruta/devforge-factory`.
+3. Tras instalar, comprueba `devforge --version` y retoma `init` o la acción pendiente.
+4. Si no se puede instalar, explica el bloqueo. Puedes leer el repositorio y planificar con archivos, pero no ejecutes gates ni crees worktrees ni afirmes que hay fábrica operativa.
 
 ## Importar una solicitud (`hacer`)
 

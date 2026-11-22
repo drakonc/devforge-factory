@@ -5,7 +5,9 @@
 1. Instala Python 3.11+, Git, Bubblewrap (`bwrap`) y PyYAML 6. Para desarrollo usa un entorno virtual: `uv venv && uv pip install --editable .` (y ejecuta `.venv/bin/devforge`). Si prefieres el `pip` del sistema y no existe, instala antes `python3-pip`; en equipos con `uv` también sirve `uv tool install --editable /ruta/a/devforge-factory`.
 2. Para leer PDF instala `pdftotext` (por ejemplo, `poppler-utils`). DOCX se lee con la biblioteca estándar.
 3. Para importar cambios de OpenSpec y archivarlos al cerrar, instala el CLI `openspec` y ejecuta `openspec init` en el proyecto.
-4. Comprueba `devforge --help`.
+4. Comprueba `devforge --version` y `devforge --help`.
+
+Si responde `devforge: command not found`, ejecuta `scripts/instalar-global.sh` o comprueba que `~/.local/bin` está en `PATH`.
 
 ## Instalación global (recomendada)
 

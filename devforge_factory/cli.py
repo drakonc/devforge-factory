@@ -9,6 +9,7 @@ from . import lifecycle
 import subprocess
 from pathlib import Path
 
+from . import __version__
 from .core import FactoryError, document_paths, repository_slug, config_for, create_job, extract_file, jobs, project_root, publish_draft_pr, read_job, transition
 
 
@@ -162,6 +163,7 @@ def interactive() -> None:
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="devforge", description="DevForge Factory — fábrica local de software")
+    result.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = result.add_subparsers(dest="action")
     sub.add_parser("init", help="Prepara la fábrica en el proyecto actual")
     sub.add_parser("repo", help="Identifica el repositorio asociado a origin")

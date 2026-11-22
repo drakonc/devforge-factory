@@ -32,6 +32,12 @@ class ProjectSourcesTests(unittest.TestCase):
                                     cwd=self.root, env=env, capture_output=True, text=True, check=True)
         self.assertIn("Filtro por fecha", result.stdout)
 
+    def test_cli_reports_version_for_support(self):
+        env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1]))
+        result = subprocess.run([sys.executable, "-m", "devforge_factory.cli", "--version"],
+                                cwd=self.root, env=env, capture_output=True, text=True, check=True)
+        self.assertRegex(result.stdout.strip(), r"^devforge \d+\.\d+\.\d+$")
+
     def test_identifies_current_repo_without_reading_an_account(self):
         self.git("remote", "add", "origin", "git@github.com:equipo/proyecto.git")
         self.assertEqual(repository_slug(self.root), "equipo/proyecto")
