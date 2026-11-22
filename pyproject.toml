@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devforge-factory"
+version = "0.1.0"
+description = "Fábrica local de software orquestada por Claude Code"
+requires-python = ">=3.11"
+dependencies = ["PyYAML>=6.0,<7"]
+
+[project.scripts]
+devforge = "devforge_factory.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["devforge_factory*"]
+
+
+[tool.setuptools.package-data]
+devforge_factory = ["defaults.yaml"]

@@ -1,0 +1,59 @@
+Lo que cambió desde la comparación anterior
+Verificado en el código actual:
+1. La regresión está corregida: import urllib.parse volvió a core.py y ahora 22 tests pasan (test_core.py + test_project_sources.py), incluido un test de extremo a extremo del CLI por subprocess.
+2. Desaparecieron los perfiles work/personal: hay un solo devforge_factory/defaults.yaml y devforge init sin parámetros. La rama base se detecta sola (develop → origin/HEAD → rama actual).
+3. Ingesta orientada al repositorio actual: devforge repo identifica el origin de GitHub (y rechaza GitLab y similares), devforge documentos lista MD/TXT/PDF/DOCX bajo docs/ excluyendo docs/requerimientio/, y devforge hacer --file registra la ruta del documento original.
+4. El skill ahora enruta por intención: /factory hacer sin argumento lista issues abiertas; Jira ABC-123 lee ese ticket; docs lista requerimientos; el texto libre se registra como solicitud directa.
+5. Sin HTTP ni tokens en el núcleo: todo pasa por el conector de Claude y el staging temporal; el CLI elimina la copia al crear el trabajo.
+6. Documentación alineada: README cita V1 y V2, advierte que V2 es GPLv3 y que no se copió código; docs/requerimientio/revision-fabrica-por-repositorio.md registra la decisión de diseño.
+Comparación actual
+Capacidad	V1	V2	DevForge hoy
+Skill /factory	sí	sí	sí, SKILL.md completo
+Agentes	7	8	9
+Admisión con decisión	no	intake	sí (ACCEPT/NEEDS-INFO/REJECT + riesgo y superficies)
+Plan/spec con criterios	spec.md	spec.md	plan.md con criterios y evidencia
+Builder delegado	sí	sí	sí, con límites de worktree
+Revisores	4 en paralelo	según ruta	3 fijos + UX/UI si hay interfaz
+Rondas con reintento	3	3	no
+Gate determinista	básico	checks.sh	sí, bwrap con red aislada (mejor que ambas)
+Approver	sí + merge	sí + merge	sí, solo recomienda
+PR	merge directo	borrador + merge	borrador; nunca fusiona
+Estado final	merged	merged	done inalcanzable
+Cola de trabajo	backlog.md	issues + label + job queue	selección de issue en el momento, sin cola
+Concurrencia	sesiones	3 por script	no
+Routing por riesgo	no	route	parcial (solo decide UX/UI)
+Coste por trabajo	no	sí	no
+Dashboard	sí	sí	no
+Reanudación por etapa	sí	sí	parcial (transición, no etapa)
+Multi-repositorio	no	no	no
+Ingesta Jira/Issues	no	solo Issues	Jira, Issues, docs, correo y texto, vía conector
+Configuración por repo	no	config.json	.devforge/project.yaml (más simple, autodetectada)
+Veredicto
+Subió a ~70 % de V1 y ~50 % de V2. Ya es una fábrica reconocible: mismo esqueleto que V1 (skill + agentes + estado + worktrees + gates + aprobación), con la ingesta de V2 resuelta de forma más simple y sin dependencia de tokens.
+Lo que sigue faltando no es arquitectura, es ciclo de vida:
+- no hay rondas: si un revisor pide cambios, el bucle depende de que la persona repita seguir y revisar;
+- no hay cierre: done no se alcanza nunca y tras publicar el trabajo queda en review para siempre;
+- no hay cola ni concurrencia, así que no puede vaciar un backlog;
+- no hay dashboard.
+Dicho de otro modo: como fábrica de un trabajo guiado por una persona, cumple; como fábrica que procesa una cola sola, no.
+Desvíos deliberados, y su costo
+Desvío	Justificación	Coste
+No fusiona ni despliega	decisión explícita de seguridad	el cierre del trabajo queda en manos humanas
+Solo lee Issues/Jira, no comenta ni cambia estados	evita efectos remotos	pierdes la trazabilidad que V2 escribe en el Issue
+Sin HTTP ni tokens en el núcleo	elimina filtración de credenciales	depende de que el conector exista en la sesión
+Sin perfiles Work/Personal	simplifica y elimina la confusión que detecté antes	contradice tu documento original, que pedía dos perfiles e instalaciones separadas; ahora la separación depende solo de instalar en repositorios distintos
+Herd desactivado	no se verificó aislamiento	OpenCode/Codex no participan todavía
+Brechas restantes, por impacto
+1. done inalcanzable: añadir devforge cerrar ID (review → done) y devforge rework ID.
+2. Rondas: round-<N>/, max_rounds y reenvío automático de hallazgos al builder; el skill ya describe el bucle, falta el soporte determinista.
+3. Cola y concurrencia: aunque sea un devforge cola que liste trabajos por estado.
+4. Dashboard que lea job.json.
+5. Tipos de rama: sigue fijo en feature/; sin fix ni hotfix.
+6. Multi-repositorio: sigue sin modelarse.
+Detalles menores detectados
+- core.py importa tempfile sin usarlo.
+- Si create_job falla durante una importación conectada, el archivo de staging ya no se borra: el try/finally anterior se perdió al refactorizar (cli.py:78-79). El README promete borrado “al crear el trabajo”, así que solo deja basura en el caso de error.
+- El repositorio sigue sin commits: todo está sin versionar en main.
+Verificado: SKILL.md, 9 agentes, core.py y cli.py completos, defaults.yaml, tests (22 OK), README/ARCHITECTURE/CONFIGURATION/INSTALL, y shebangs reales de factory/bin/job y gate de V2.
+No verificado: ejecución real con Claude Code y sus conectores, ni bwrap contra un repo destino.
+Riesgo: sin commits no hay respaldo; y el ciclo queda abierto porque nada transiciona a done.

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "blockReadsOutsideWorkingDirectories": true,
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./.envrc)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./**/.envrc)",
+      "Read(./.npmrc)",
+      "Read(./.netrc)",
+      "Read(./.pypirc)",
+      "Read(./**/id_rsa*)",
+      "Read(./**/id_ed25519*)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.key)",
+      "Read(./**/*credentials*)",
+      "Read(./**/*secret*)",
+      "Read(./**/kubeconfig*)",
+      "Read(./**/config.json)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "filesystem": {
+      "denyRead": [
+        "./.env",
+        "./.env.*",
+        "./.envrc",
+        "./**/.env",
+        "./**/.env.*",
+        "./**/.envrc",
+        "./.npmrc",
+        "./.netrc",
+        "./.pypirc",
+        "./**/id_rsa*",
+        "./**/id_ed25519*",
+        "./**/*.pem",
+        "./**/*.key",
+        "./**/*credentials*",
+        "./**/*secret*",
+        "./**/kubeconfig*"
+      ]
+    },
+    "credentials": {
+      "envVars": [
+        "GITHUB_TOKEN",
+        "GH_TOKEN",
+        "JIRA_API_TOKEN",
+        "JIRA_USER_EMAIL",
+        "ANTHROPIC_API_KEY",
+        "OPENAI_API_KEY",
+        "NPM_TOKEN",
+        "GITLAB_TOKEN",
+        "CLOUDFLARE_API_TOKEN",
+        "DOCKER_PASSWORD",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AZURE_CLIENT_SECRET",
+        "GOOGLE_APPLICATION_CREDENTIALS"
+      ],
+      "files": [
+        { "path": "~/.ssh", "mode": "deny" },
+        { "path": "~/.aws", "mode": "deny" },
+        { "path": "~/.config/gh", "mode": "deny" },
+        { "path": "~/.config/gcloud", "mode": "deny" },
+        { "path": "~/.kube", "mode": "deny" },
+        { "path": "~/.docker", "mode": "deny" },
+        { "path": "~/.azure", "mode": "deny" },
+        { "path": "~/.config/opencode", "mode": "deny" },
+        { "path": "~/.codex", "mode": "deny" }
+      ]
+    }
+  }
+}

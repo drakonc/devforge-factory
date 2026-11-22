@@ -1,0 +1,10 @@
+base_branch: develop
+worktree_dir: .devforge/worktrees
+quality_gates:
+  - git-diff-check
+  - tests-configured
+  - human-approval
+test_command: []
+test_env: []
+max_rounds: 3
+concurrency: 2
