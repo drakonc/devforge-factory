@@ -6,7 +6,7 @@ Los agentes y el orquestador están definidos en Markdown. Python implementa el 
 
 ## Inicio rápido
 
-Requiere Python 3.11 o superior, Git, Bubblewrap (`bwrap`), Claude Code y PyYAML 6. Instala el CLI desde este repositorio con `python3 -m pip install -e .`. En un repositorio de destino instala la skill según [INSTALL.md](INSTALL.md) y ejecuta `devforge init`; luego abre Claude Code en ese repositorio e invoca `/factory`.
+Requiere Python 3.11 o superior, Git, Bubblewrap (`bwrap`), Claude Code y PyYAML 6. Instala el CLI desde este repositorio con `python3 -m pip install -e .`. Para usar `/factory` en todos tus proyectos sin copiar archivos, ejecuta `./scripts/instalar-global.sh`; después basta `devforge init` en cada repositorio y abrir Claude Code allí. Consulta [INSTALL.md](INSTALL.md).
 
 El proyecto debe tener la rama base configurada (se prefiere `develop` si existe) y local. Configura `test_command` en `.devforge/project.yaml` como lista de argumentos, por ejemplo `["python3", "-m", "unittest", "discover"]`. Los trabajos se guardan en `.devforge/jobs/`; sus worktrees quedan en `.devforge/worktrees/`, ignorados por Git. Los gates corren sin red con el filesystem de solo lectura, salvo el worktree.
 

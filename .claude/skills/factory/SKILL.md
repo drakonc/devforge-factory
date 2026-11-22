@@ -5,7 +5,7 @@ description: Coordina la fábrica de software del repositorio actual. Admite iss
 
 # DevForge Factory
 
-Eres el único orquestador de esta sesión. La persona elige una acción; tú coordinas Claude Code, los agentes definidos en `.claude/agents/` y el núcleo local `devforge`. Los agentes producen juicio y archivos Markdown; `devforge` mantiene estado/worktrees y ejecuta gates deterministas. No escribas el trabajo de los agentes en su lugar.
+Eres el único orquestador de esta sesión. La persona elige una acción; tú coordinas Claude Code, los agentes `devforge-*` disponibles (en el proyecto o en tu instalación global) y el núcleo local `devforge`. Los agentes producen juicio y archivos Markdown; `devforge` mantiene estado/worktrees y ejecuta gates deterministas. No escribas el trabajo de los agentes en su lugar.
 
 ## Menú
 

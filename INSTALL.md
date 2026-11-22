@@ -7,9 +7,41 @@
 3. Para importar cambios de OpenSpec y archivarlos al cerrar, instala el CLI `openspec` y ejecuta `openspec init` en el proyecto.
 4. Comprueba `devforge --help`.
 
-## Claude Code
+## Instalación global (recomendada)
 
-Copia o enlaza `.claude/skills/factory/SKILL.md`, `.claude/agents/` y `.claude/settings.json` a la raíz del proyecto donde ejecutarás la fábrica. Revisa y combina las restricciones con la configuración existente; no sobrescribas settings existentes. Antes de delegar, confirma en Claude Code que `/sandbox` indica sandbox activo y que `/status` carga las restricciones. Ejecuta `devforge init` desde ese repositorio. Ajusta `test_command` y `base_branch` en `.devforge/project.yaml`.
+Instala una vez y usa `/factory` en todos tus proyectos:
+
+```bash
+./scripts/instalar-global.sh
+```
+
+El script:
+
+1. Instala el CLI con `pipx` si `devforge` no existe.
+2. Enlaza la skill en `~/.claude/skills/factory` (symlink: los cambios del repo se ven al instante).
+3. Copia los agentes `devforge-*.md` a `~/.claude/agents/`.
+4. Copia `.claude/settings.json` a `~/.claude/settings.json` solo si no existe; si existe, avisa para combinarlo.
+
+Repite el script cuando actualices los agentes. La skill se actualiza sola por el symlink. Usa `CLAUDE_CONFIG_DIR` si tu configuración de Claude vive en otra ruta.
+
+Equivalente manual:
+
+```bash
+ln -sfn /ruta/devforge-factory/.claude/skills/factory ~/.claude/skills/factory
+cp /ruta/devforge-factory/.claude/agents/devforge-*.md ~/.claude/agents/
+```
+
+## Por proyecto
+
+Cada repositorio conserva su configuración en `.devforge/project.yaml`:
+
+```bash
+devforge init
+```
+
+Ajusta `base_branch` y `test_command`; el resto tiene valores por defecto. Puedes commitear `.devforge/project.yaml` para compartirlo con el equipo. Si prefieres aislar los agentes por repositorio, copia `.claude/skills/factory/` y `.claude/agents/` al proyecto en lugar de usar la instalación global.
+
+Antes de delegar, confirma en Claude Code que `/sandbox` indica sandbox activo y que `/status` carga las restricciones.
 
 La configuración de referencia habilita el sandbox de Bash de Claude Code con fallo cerrado si no está disponible y bloquea las lecturas de herramientas de archivos fuera de los directorios de trabajo. Claude documenta que el sandbox de Bash no cubre las herramientas integradas de archivos, Web, MCP ni hooks; revisa los límites en la [documentación oficial de sandbox](https://code.claude.com/docs/en/sandboxing).
 
