@@ -1,6 +1,5 @@
 """Cola cooperativa por repositorio y tablero local de solo lectura."""
 
-import fcntl
 import html
 import json
 import os
@@ -9,6 +8,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
 from .core import FactoryError, config_for, jobs, now
+from .locks import acquire, open_lock
 
 DEFAULT_LEASE_HOURS = 12
 
@@ -53,14 +53,14 @@ def _save(path, content):
 def _queue(cwd):
     root, config = config_for(cwd)
     folder = _directory(root)
-    lock = os.open(folder / ".queue.lock", os.O_NOFOLLOW | os.O_CREAT | os.O_RDWR, 0o600)
+    lock = open_lock(folder / ".queue.lock")
     try:
-        fcntl.flock(lock, fcntl.LOCK_EX)
+        acquire(lock)
         state = folder / ".reservas.json"
         if state.is_symlink():
             raise FactoryError("Ruta de reservas inválida.")
         try:
-            leases = json.loads(state.read_text()) if state.exists() else {}
+            leases = json.loads(state.read_text(encoding="utf-8")) if state.exists() else {}
         except (ValueError, OSError) as exc:
             raise FactoryError("No se pudieron leer las reservas.") from exc
         if not isinstance(leases, dict):

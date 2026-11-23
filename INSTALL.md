@@ -2,7 +2,7 @@
 
 ## Núcleo
 
-1. Instala Python 3.11+, Git, Bubblewrap (`bwrap`) y PyYAML 6. Para desarrollo usa un entorno virtual: `uv venv && uv pip install --editable .` (y ejecuta `.venv/bin/devforge`). Si prefieres el `pip` del sistema y no existe, instala antes `python3-pip`; en equipos con `uv` también sirve `uv tool install --editable /ruta/a/devforge-factory`.
+1. Instala Python 3.11+, Git, Bubblewrap (`bwrap`) y PyYAML 6. En Windows no hace falta Bubblewrap ni WSL: consulta [Windows nativo](#windows-nativo). Para desarrollo usa un entorno virtual: `uv venv && uv pip install --editable .` (y ejecuta `.venv/bin/devforge`). Si prefieres el `pip` del sistema y no existe, instala antes `python3-pip`; en equipos con `uv` también sirve `uv tool install --editable /ruta/a/devforge-factory`.
 2. Para leer PDF instala `pdftotext` (por ejemplo, `poppler-utils`). DOCX se lee con la biblioteca estándar.
 3. Para importar cambios de OpenSpec y archivarlos al cerrar, instala el CLI `openspec` y ejecuta `openspec init` en el proyecto.
 4. Comprueba `devforge --version` y `devforge --help`.
@@ -64,7 +64,7 @@ Eso copia la skill a `~/.claude/skills/factory`, los agentes a `~/.claude/agents
 ### Desde un repositorio interno (Azure Repos)
 
 ```bash
-uv tool install "git+https://dev.azure.com/ORG/PROYECTO/_git/devforge-factory@v0.1.0"
+uv tool install "git+https://dev.azure.com/ORG/PROYECTO/_git/devforge-factory@v0.2.0"
 devforge instalar-global
 ```
 
@@ -82,7 +82,7 @@ uv publish --publish-url https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED
 En la máquina de destino:
 
 ```bash
-uv tool install devforge-factory==0.1.0 --index https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED/pypi/simple/
+uv tool install devforge-factory==0.2.0 --index https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED/pypi/simple/
 devforge instalar-global
 ```
 
@@ -91,7 +91,7 @@ El feed debe tener también PyYAML. Configura las credenciales con el gestor de 
 ### Desde un wheel compartido
 
 ```bash
-uv tool install /ruta/compartida/devforge_factory-0.1.0-py3-none-any.whl
+uv tool install /ruta/compartida/devforge_factory-0.2.0-py3-none-any.whl
 devforge instalar-global
 ```
 
@@ -100,11 +100,36 @@ devforge instalar-global
 Descarga el wheel de DevForge y el de PyYAML en una máquina conectada, cópialos juntos y:
 
 ```bash
-uv tool install --no-index --find-links ./dist devforge-factory==0.1.0
+uv tool install --no-index --find-links ./dist devforge-factory==0.2.0
 devforge instalar-global
 ```
 
 Actualizar: `uv tool upgrade devforge-factory` y repite `devforge instalar-global` para refrescar los agentes. La skill se actualiza al reinstalar.
+
+## Windows nativo
+
+Funciona en Windows 10/11 sin WSL, desde PowerShell o cmd. Requisitos: Python 3.11+, Git para Windows y `uv` (o `pipx`).
+
+```powershell
+uv tool install git+https://github.com/drakonc/devforge-factory
+devforge instalar-global
+```
+
+Desde un clon local: `uv tool install --editable C:\ruta\devforge-factory`. `scripts/instalar-global.sh` es solo para Linux; en Windows `devforge instalar-global` hace lo mismo copiando la skill en lugar de enlazarla, así que repítelo al actualizar.
+
+Diferencias respecto a Linux:
+
+- **Sandbox de Claude Code.** No existe en Windows nativo, y con `sandbox.failIfUnavailable` Claude Code se niega a arrancar. Por eso `devforge instalar-global` omite el bloque `sandbox` y solo añade `permissions`. Los comandos de los agentes se ejecutan sin sandbox; `/sandbox` no aplica.
+- **Gate de pruebas.** Bubblewrap no existe, así que `tests-configured` falla cerrado por defecto. Para ejecutar las pruebas añade a `.devforge/project.yaml`:
+
+  ```yaml
+  test_isolation: none
+  ```
+
+  Las pruebas se lanzan sin shell, con un entorno mínimo más `test_env`, con `USERPROFILE`, `APPDATA`, `LOCALAPPDATA` y `TEMP` apuntando a una carpeta temporal, y con el límite de 30 minutos. **No hay aislamiento de disco ni de red.** El valor se fija al crear cada trabajo: los trabajos anteriores al cambio siguen fallando cerrados.
+- **Perfil temporal.** Las herramientas que guardan caché en el perfil (NuGet, npm, Composer) no la encuentran. Declara en `test_env` el nombre de la variable que apunta a la caché real, por ejemplo `NUGET_PACKAGES` o `npm_config_cache`, y defínela en tu entorno.
+- **`test_command`.** El primer argumento se resuelve en `PATH` con `PATHEXT` (`npm` encuentra `npm.cmd`); una ruta relativa como `vendor/bin/phpunit` se resuelve dentro del worktree.
+- **Enlaces simbólicos.** Las comprobaciones que los rechazan siguen activas; no hace falta el modo desarrollador.
 
 ## Ubuntu 24.04+ y 26.04: sandbox de Claude
 

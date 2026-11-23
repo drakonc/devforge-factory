@@ -9,7 +9,8 @@ Fábrica local de software para Claude Code. Conviertes una petición (texto, is
 ## Requisitos
 
 - Python 3.11+, Git y Claude Code.
-- Bubblewrap (`bwrap`) para ejecutar las pruebas aisladas.
+- Linux: Bubblewrap (`bwrap`) para ejecutar las pruebas aisladas.
+- Windows 10/11 nativo (sin WSL): funciona sin Bubblewrap, con las diferencias de aislamiento descritas en [INSTALL.md](INSTALL.md#windows-nativo).
 - Opcionales: `gh` (publicar PR en GitHub), `openspec` (cambios OpenSpec), `pdftotext` (leer PDF).
 
 ## Instalación
@@ -26,6 +27,8 @@ Sin `uv`: `pipx install git+https://github.com/drakonc/devforge-factory`. Desde 
 `devforge instalar-global` instala en `~/.claude/` la skill `/factory`, los 9 agentes y la configuración de referencia de Claude Code. Si ya tienes `~/.claude/settings.json`, **lo combina sin pisar nada**: conserva tus valores, añade solo lo que falta y deja un respaldo en `settings.json.bak`.
 
 Esa configuración activa el sandbox de Bash y excluye `devforge` de él (`excludedCommands: ["devforge", "devforge *"]`), porque el CLI necesita crear worktrees en `.git/worktrees`. Las pruebas que lanza `devforge` siguen aisladas con su propio `bwrap`.
+
+En Windows nativo los comandos son los mismos (PowerShell o cmd). `devforge instalar-global` no escribe el bloque `sandbox`, porque Claude Code no tiene sandbox en Windows y con `failIfUnavailable` no arrancaría; sí instala la skill, los agentes y las reglas `permissions`.
 
 Comprueba con `devforge --version`. Detalles en [INSTALL.md](INSTALL.md).
 
@@ -118,7 +121,7 @@ sudo apparmor_parser -r /etc/apparmor.d/bwrap
 
 Con esto `bwrap` queda sin confinamiento AppArmor, aunque mantiene su propio aislamiento.
 
-**El gate de pruebas falla siempre.** Revisa que `test_command` en `.devforge/project.yaml` no esté vacío y que `bwrap` funcione. Sin aislamiento, el gate falla cerrado a propósito.
+**El gate de pruebas falla siempre.** Revisa que `test_command` en `.devforge/project.yaml` no esté vacío y que `bwrap` funcione. Sin aislamiento, el gate falla cerrado a propósito. En Windows no existe `bwrap`: el gate solo ejecuta las pruebas si el proyecto declara `test_isolation: none` (ver [INSTALL.md](INSTALL.md#windows-nativo)); el valor se fija al crear cada trabajo.
 
 ## Más documentación
 

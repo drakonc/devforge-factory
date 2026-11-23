@@ -13,6 +13,7 @@ from unittest.mock import patch
 from devforge_factory import lifecycle
 from devforge_factory.core import FactoryError, create_job, git, init_project, read_job, transition
 from devforge_factory.openspec import import_change
+from support import symlinks_available
 
 
 class OpenSpecAdapterTests(unittest.TestCase):
@@ -70,12 +71,14 @@ class OpenSpecAdapterTests(unittest.TestCase):
             with self.assertRaisesRegex(FactoryError, "inválido"):
                 import_change(self.root, value)
 
+    @unittest.skipUnless(symlinks_available(), "este entorno no permite crear enlaces simbólicos")
     def test_symlinked_change_is_rejected(self):
         real = self.change("real")
         (self.root / "openspec" / "changes" / "alias").symlink_to(real)
         with self.assertRaisesRegex(FactoryError, "enlace"):
             import_change(self.root, "alias")
 
+    @unittest.skipUnless(symlinks_available(), "este entorno no permite crear enlaces simbólicos")
     def test_symlinked_staging_is_rejected(self):
         self.change()
         outside = self.root / "outside"
@@ -105,8 +108,19 @@ class OpenSpecAdapterTests(unittest.TestCase):
             encoding="utf-8",
         )
         binary.chmod(0o755)
+        # Windows no ejecuta scripts de sh: el mismo CLI falso como archivo por lotes.
+        (bindir / "openspec.cmd").write_text(
+            "@echo off\n"
+            '>>"%OPENSPEC_LOG%" echo %*\n'
+            'if "%1"=="validate" if not "%OPENSPEC_FAIL%"=="" if exist "%OPENSPEC_FAIL%" (\n'
+            "  echo cambio invalido 1>&2\n"
+            "  exit /b 1\n"
+            ")\n"
+            "exit /b 0\n",
+            encoding="utf-8",
+        )
         log = self.root / "openspec.log"
-        env = {"PATH": f"{bindir}:{os.environ['PATH']}", "OPENSPEC_LOG": str(log), "OPENSPEC_FAIL": ""}
+        env = {"PATH": f"{bindir}{os.pathsep}{os.environ['PATH']}", "OPENSPEC_LOG": str(log), "OPENSPEC_FAIL": ""}
         return log, env
 
     def _review_job(self, source="openspec"):
@@ -181,6 +195,6 @@ class OpenSpecAdapterTests(unittest.TestCase):
         self.assertIn("Trabajo creado", created.stdout)
         listed = subprocess.run(
             [sys.executable, "-m", "devforge_factory.cli", "ver"],
-            cwd=self.root, env=env, capture_output=True, text=True, check=True,
+            cwd=self.root, env=env, capture_output=True, text=True, encoding="utf-8", check=True,
         )
         self.assertIn("Autenticación de usuarios", listed.stdout)

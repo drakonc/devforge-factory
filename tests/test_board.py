@@ -58,7 +58,7 @@ class BoardTests(unittest.TestCase):
     def test_dashboard_escapes_titles_and_omits_request_bodies(self):
         folder = create_job(self.root, "azure", "<script>fallo</script>\nDetalle privado", "AB-42", branch_type="fix")
         self.assertTrue(read_job(folder)["branch"].startswith("fix/ab-42-"))
-        page = dashboard(self.root).read_text()
+        page = dashboard(self.root).read_text(encoding="utf-8")
         self.assertIn("&lt;script&gt;", page)
         self.assertNotIn("Detalle privado", page)
         self.assertNotIn("<script>", page)

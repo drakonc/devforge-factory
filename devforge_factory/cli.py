@@ -75,7 +75,7 @@ def create_from(args) -> None:
         options["branch_type"] = args.branch_type
     if source == "file":
         root = project_root(Path.cwd())
-        document = str(file_path.relative_to(root)) if file_path.is_relative_to(root) else file_path.name
+        document = file_path.relative_to(root).as_posix() if file_path.is_relative_to(root) else file_path.name
         options["document"] = document
     folder = create_job(Path.cwd(), source, text, key, **options)
     if staged_import:
@@ -192,7 +192,17 @@ def parser() -> argparse.ArgumentParser:
     return result
 
 
+def use_utf8_streams() -> None:
+    """En Windows las tuberías usan la codificación regional, que no puede representar todos los mensajes."""
+    if os.name != "nt":
+        return
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main() -> None:
+    use_utf8_streams()
     try:
         args = parser().parse_args()
         if not args.action:

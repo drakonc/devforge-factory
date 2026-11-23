@@ -1,12 +1,12 @@
 """Ciclo híbrido: los agentes producen evidencia y el núcleo controla cada ronda."""
 
 from contextlib import contextmanager
-import fcntl
 import os
 from pathlib import Path
 import re
 
 from .core import FactoryError, TRANSITIONS, git, now, read_job, run_gate, write_job
+from .locks import acquire, open_lock
 
 
 MANDATORY = ("review-code.md", "review-security.md", "review-qa.md")
@@ -20,10 +20,10 @@ def job_lock(folder):
     path = folder / ".lifecycle.lock"
     if path.is_symlink():
         raise FactoryError("El bloqueo del trabajo no puede ser un enlace simbólico.")
-    lock = os.open(path, os.O_NOFOLLOW | os.O_CREAT | os.O_RDWR, 0o600)
+    lock = open_lock(path)
     try:
         try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            acquire(lock, blocking=False)
         except BlockingIOError as exc:
             raise FactoryError("Otro proceso está operando sobre este trabajo.") from exc
         yield

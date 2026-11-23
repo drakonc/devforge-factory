@@ -10,11 +10,11 @@ import unittest
 
 import yaml
 
-from support import bwrap_ready
+from support import GATE_PYTHON, IS_WINDOWS, bwrap_ready
 
 
 class DeliveryFlowTests(unittest.TestCase):
-    @unittest.skipUnless(bwrap_ready(), "bwrap no puede crear el sandbox en este entorno")
+    @unittest.skipUnless(bwrap_ready() or IS_WINDOWS, "bwrap no puede crear el sandbox en este entorno")
     def test_boards_to_local_close_and_dashboard(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -34,7 +34,9 @@ class DeliveryFlowTests(unittest.TestCase):
             cli("init")
             config = root / ".devforge/project.yaml"
             settings = yaml.safe_load(config.read_text())
-            settings["test_command"] = ["python3", "-c", "from pathlib import Path; assert Path('total.txt').read_text() == '10'"]
+            settings["test_command"] = [GATE_PYTHON, "-c", "from pathlib import Path; assert Path('total.txt').read_text() == '10'"]
+            if IS_WINDOWS:
+                settings["test_isolation"] = "none"
             config.write_text(yaml.safe_dump(settings))
             cli("hacer", "--source", "azure", "--key", "AB-123", "--type", "fix", "--stdin",
                 stdin="Corregir total")

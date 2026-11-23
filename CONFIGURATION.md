@@ -17,6 +17,8 @@ La inicialización elige `develop` si existe localmente. Después considera la r
 
 Configura `test_command` con el comando real del proyecto como lista de argumentos. Las pruebas se ejecutan con Bubblewrap sin red y el gate falla si faltan el comando o el aislamiento. Incluye en `test_env` solo variables necesarias para pruebas.
 
+`test_isolation` (opcional, `sandbox` por defecto) decide cómo se aíslan las pruebas. `sandbox` exige Bubblewrap. `none` solo se acepta en Windows nativo, donde Bubblewrap no existe: las pruebas se ejecutan sin shell, con un entorno mínimo más las variables de `test_env`, con el perfil del usuario (`USERPROFILE`, `APPDATA`, `LOCALAPPDATA`, `TEMP`) redirigido a una carpeta temporal y con el mismo límite de 30 minutos, pero **conservan acceso al disco y a la red**. En Linux `none` hace fallar el gate. Como `test_command` y `test_env`, el valor se fija al crear el trabajo.
+
 El origen se elige en cada solicitud. Azure Boards, GitHub y Jira usan los conectores disponibles en la sesión Claude. Los cambios de OpenSpec se importan desde `openspec/changes/<cambio>/` con `devforge openspec` y se validan, sincronizan y archivan al cerrar el trabajo; eso requiere el CLI `openspec`. `devforge repo` identifica el repositorio de GitHub o Azure Repos asociado a origin. `devforge documentos` descubre Markdown, TXT, PDF y DOCX bajo `docs/`. El historial de `docs/requerimientio/` se conserva fuera del listado automático y se puede importar por ruta explícita. Al importar un documento se registra su ruta y se conserva el original.
 
 ## Capacidad y rondas

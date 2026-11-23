@@ -47,7 +47,7 @@ Prepara un repositorio para la fábrica. Se ejecuta antes del primer trabajo y t
    - **Quality Gates**: los tres por defecto. Si se quita `tests-configured` o `human-approval`, explica exactamente qué deja de verificarse.
    No preguntes por Jira, Azure ni GitHub: el origen se elige en cada solicitud.
 5. Escribe los valores confirmados en `.devforge/project.yaml` con la herramienta de edición, conservando las claves y comentarios existentes. Muestra el YAML final.
-6. Comprueba dependencias sin instalar: `bwrap` (gates), `gh` (solo publicar en GitHub) y `openspec` (solo si habrá cambios OpenSpec). Informa qué falta y el comando de instalación del sistema, sin ejecutarlo.
+6. Comprueba dependencias sin instalar: `bwrap` (gates), `gh` (solo publicar en GitHub) y `openspec` (solo si habrá cambios OpenSpec). Informa qué falta y el comando de instalación del sistema, sin ejecutarlo. En Windows nativo `bwrap` no existe: explica que el gate de pruebas falla cerrado salvo con `test_isolation: none`, que ejecuta las pruebas sin aislamiento de disco ni red, y añade esa clave solo si la persona lo acepta de forma explícita.
 7. Ejecuta `devforge repo` y, si existe `docs/`, `devforge documentos`. Resume configuración, dependencias y el siguiente paso (`hacer`).
 
 ### Si `devforge` no está instalado

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import json
 import os
+import queue
 import re
-import selectors
 import shutil
 import subprocess
+import tempfile
+import threading
 import time
 import urllib.parse
 import unicodedata
@@ -35,6 +37,20 @@ TRANSITIONS = {
     "done": set(),
 }
 SUPPORTED_GATES = {"git-diff-check", "tests-configured", "human-approval"}
+IS_WINDOWS = os.name == "nt"
+# "sandbox" aísla las pruebas con Bubblewrap; "none" solo existe para Windows, que no tiene equivalente.
+TEST_ISOLATION_SANDBOX = "sandbox"
+TEST_ISOLATION_NONE = "none"
+TEST_ISOLATION_MODES = {TEST_ISOLATION_SANDBOX, TEST_ISOLATION_NONE}
+TEST_TIMEOUT_SECONDS = 1800
+# Variables que Windows necesita para arrancar procesos; el resto del entorno no se hereda.
+WINDOWS_SYSTEM_ENV = (
+    "SystemRoot", "SystemDrive", "windir", "ComSpec", "PATH", "PATHEXT", "OS",
+    "NUMBER_OF_PROCESSORS", "PROCESSOR_ARCHITECTURE", "ProgramData",
+    "ProgramFiles", "ProgramFiles(x86)", "CommonProgramFiles",
+)
+# Carpetas de perfil que se redirigen a un directorio temporal durante las pruebas.
+WINDOWS_PROFILE_ENV = ("USERPROFILE", "HOME", "APPDATA", "LOCALAPPDATA", "TEMP", "TMP")
 
 
 def now() -> str:
@@ -49,10 +65,21 @@ def slugify(value: str) -> str:
 
 
 def git(cwd: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True)
+    # Git emite UTF-8; la codificación regional de Windows no puede decodificar todas sus rutas.
+    result = subprocess.run(["git", *args], cwd=cwd, text=True, encoding="utf-8", errors="replace", capture_output=True)
     if check and result.returncode:
         raise FactoryError(result.stderr.strip() or f"Falló git {' '.join(args)}")
     return result
+
+
+def kill_tree(process: subprocess.Popen) -> None:
+    """Termina el proceso y, en Windows, también sus descendientes."""
+    if process.poll() is None:
+        if IS_WINDOWS:
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            process.kill()
+    process.wait()
 
 
 def load_yaml(path: Path) -> dict:
@@ -155,8 +182,22 @@ def extract_file(path: Path) -> str:
             raise FactoryError("Para leer PDF instala poppler-utils (comando pdftotext).")
         process = subprocess.Popen([binary, "-layout", str(path), "-"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         assert process.stdout is not None
-        selector = selectors.DefaultSelector()
-        selector.register(process.stdout, selectors.EVENT_READ)
+        descriptor = process.stdout.fileno()
+        pending: queue.Queue[bytes] = queue.Queue()
+
+        def pump() -> None:
+            # Un hilo lector sustituye a select(): Windows no admite select() sobre tuberías.
+            try:
+                while True:
+                    chunk = os.read(descriptor, 64 * 1024)
+                    pending.put(chunk)
+                    if not chunk:
+                        return
+            except OSError:
+                pending.put(b"")
+
+        reader = threading.Thread(target=pump, daemon=True)
+        reader.start()
         chunks: list[bytes] = []
         total = 0
         deadline = time.monotonic() + 45
@@ -165,27 +206,28 @@ def extract_file(path: Path) -> str:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise FactoryError("La extracción del PDF excedió 45 segundos.")
-                events = selector.select(min(remaining, 0.25))
-                if events:
-                    chunk = os.read(process.stdout.fileno(), 64 * 1024)
-                    if not chunk:
-                        break
-                    total += len(chunk)
-                    if total > 10 * 1024 * 1024:
-                        raise FactoryError("El texto extraído supera el límite de 10 MiB.")
-                    chunks.append(chunk)
-                elif process.poll() is not None:
+                try:
+                    chunk = pending.get(timeout=min(remaining, 0.25))
+                except queue.Empty:
+                    continue
+                if not chunk:
                     break
-            return_code = process.wait(timeout=max(0.1, deadline - time.monotonic()))
+                total += len(chunk)
+                if total > 10 * 1024 * 1024:
+                    raise FactoryError("El texto extraído supera el límite de 10 MiB.")
+                chunks.append(chunk)
+            try:
+                return_code = process.wait(timeout=max(0.1, deadline - time.monotonic()))
+            except subprocess.TimeoutExpired as exc:
+                raise FactoryError("La extracción del PDF excedió 45 segundos.") from exc
             if return_code:
                 raise FactoryError("No se pudo extraer el PDF con pdftotext.")
             return b"".join(chunks).decode("utf-8", errors="replace")
         finally:
-            selector.close()
-            if process.poll() is None:
-                process.kill()
-                process.wait()
-            process.stdout.close()
+            kill_tree(process)
+            reader.join(timeout=5)
+            if not reader.is_alive():
+                process.stdout.close()
     if suffix == ".docx":
         try:
             with zipfile.ZipFile(path) as docx:
@@ -332,7 +374,8 @@ def create_job(path: Path, source: str, text: str, key: str = "", *, document: s
             raise FactoryError(add.stderr.strip())
     except Exception:
         worktree_list = git(root, "worktree", "list", "--porcelain", check=False).stdout
-        if f"worktree {worktree_path}\n" in worktree_list:
+        # Git lista las rutas con barras normales también en Windows.
+        if f"worktree {worktree_path.as_posix()}\n" in worktree_list:
             git(root, "worktree", "remove", "--force", str(worktree_path), check=False)
         if branch_created:
             git(root, "branch", "-D", branch, check=False)
@@ -358,6 +401,7 @@ def create_job(path: Path, source: str, text: str, key: str = "", *, document: s
         "quality_gates": config.get("quality_gates", []),
         "test_command": config.get("test_command", []),
         "test_env": config.get("test_env", []),
+        "test_isolation": config.get("test_isolation", TEST_ISOLATION_SANDBOX),
     }
     try:
         write_job(job_path, job)
@@ -379,6 +423,56 @@ def jobs(path: Path) -> list[tuple[Path, dict]]:
         job_path = job_file.parent
         result.append((job_path, read_job(job_path)))
     return result
+
+
+def _sandbox_command(bwrap: str, worktree: Path, safe_env: dict, test_command: list[str]) -> list[str]:
+    command = [
+        bwrap, "--unshare-all", "--die-with-parent", "--ro-bind", "/usr", "/usr",
+        "--ro-bind", "/lib", "/lib", "--ro-bind", "/lib64", "/lib64",
+        "--tmpfs", "/etc", "--dir", "/etc", "--ro-bind", "/etc/ld.so.cache", "/etc/ld.so.cache",
+        "--dir", "/mnt", "--bind", str(worktree), "/mnt", "--tmpfs", "/home", "--tmpfs", "/root",
+        "--tmpfs", "/run", "--tmpfs", "/tmp", "--dir", "/tmp/home",
+        "--proc", "/proc", "--dev", "/dev", "--chdir", "/mnt", "--clearenv",
+        "--setenv", "HOME", "/tmp/home", "--setenv", "TMPDIR", "/tmp",
+        "--setenv", "PATH", "/usr/local/bin:/usr/bin",
+    ]
+    for name, value in safe_env.items():
+        command.extend(("--setenv", name, value))
+    command.extend(("--", *test_command))
+    return command
+
+
+def _run_test_process(command: list[str], worktree: Path, env: dict) -> int:
+    """Ejecuta las pruebas sin shell ni salida; al vencer el plazo termina todo el árbol de procesos."""
+    process = subprocess.Popen(command, cwd=worktree, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        return process.wait(timeout=TEST_TIMEOUT_SECONDS)
+    finally:
+        kill_tree(process)
+
+
+def _windows_executable(program: str, worktree: Path, search_path: str) -> str:
+    """Resuelve el ejecutable como lo haría el proyecto: rutas relativas al worktree y extensiones de PATHEXT."""
+    if not os.path.dirname(program):
+        resolved = shutil.which(program, path=search_path)
+    else:
+        base = Path(program) if Path(program).is_absolute() else worktree / program
+        extensions = [ext for ext in os.environ.get("PATHEXT", "").split(os.pathsep) if ext]
+        candidates = [base, *(base.with_name(base.name + ext) for ext in extensions)]
+        resolved = next((str(item) for item in candidates if item.is_file()), None)
+    if not resolved:
+        raise OSError(f"No se encontró el ejecutable {program}.")
+    return resolved
+
+
+def _run_windows_tests(worktree: Path, test_command: list[str], safe_env: dict) -> int:
+    """Pruebas en Windows sin sandbox: no heredan el entorno ni el perfil del usuario, pero sí disco y red."""
+    with tempfile.TemporaryDirectory(prefix="devforge-pruebas-", ignore_cleanup_errors=True) as profile:
+        env = {name: os.environ[name] for name in WINDOWS_SYSTEM_ENV if name in os.environ}
+        env.update({name: profile for name in WINDOWS_PROFILE_ENV})
+        env.update(safe_env)
+        executable = _windows_executable(test_command[0], worktree, env.get("PATH", ""))
+        return _run_test_process([executable, *test_command[1:]], worktree, env)
 
 
 def run_gate(path: Path, job: dict) -> tuple[bool, str]:
@@ -406,32 +500,32 @@ def run_gate(path: Path, job: dict) -> tuple[bool, str]:
         allowed_names = job.get("test_env", [])
         if not isinstance(allowed_names, list) or not all(isinstance(name, str) and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) for name in allowed_names):
             return False, "test_env: FAIL; debe ser una lista de nombres de variables válidos."
-        bwrap = shutil.which("bwrap")
-        if not bwrap:
-            return False, "test-command: FAIL (bwrap no está instalado; ejecución aislada obligatoria)"
+        isolation = job.get("test_isolation", TEST_ISOLATION_SANDBOX)
+        if not isinstance(isolation, str) or isolation not in TEST_ISOLATION_MODES:
+            return False, "test_isolation: FAIL; usa sandbox o none."
+        if isolation == TEST_ISOLATION_NONE and not IS_WINDOWS:
+            return False, "test_isolation: FAIL; none solo se admite en Windows, donde no existe Bubblewrap."
         safe_env = {name: os.environ[name] for name in ("LANG", "LC_ALL", "LC_CTYPE", "TZ") if name in os.environ}
+        safe_env.update({name: os.environ[name] for name in allowed_names if name in os.environ})
         try:
-            safe_env.update({name: os.environ[name] for name in allowed_names if name in os.environ})
-            sandbox_command = [
-                bwrap, "--unshare-all", "--die-with-parent", "--ro-bind", "/usr", "/usr",
-                "--ro-bind", "/lib", "/lib", "--ro-bind", "/lib64", "/lib64",
-                "--tmpfs", "/etc", "--dir", "/etc", "--ro-bind", "/etc/ld.so.cache", "/etc/ld.so.cache",
-                "--dir", "/mnt", "--bind", str(worktree), "/mnt", "--tmpfs", "/home", "--tmpfs", "/root",
-                "--tmpfs", "/run", "--tmpfs", "/tmp", "--dir", "/tmp/home",
-                "--proc", "/proc", "--dev", "/dev", "--chdir", "/mnt", "--clearenv",
-                "--setenv", "HOME", "/tmp/home", "--setenv", "TMPDIR", "/tmp",
-                "--setenv", "PATH", "/usr/local/bin:/usr/bin",
-            ]
-            for name, value in safe_env.items():
-                sandbox_command.extend(("--setenv", name, value))
-            sandbox_command.extend(("--", *test_command))
-            test = subprocess.run(sandbox_command, cwd=worktree, env={}, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=1800)
+            if isolation == TEST_ISOLATION_SANDBOX:
+                bwrap = shutil.which("bwrap")
+                if not bwrap:
+                    if IS_WINDOWS:
+                        return False, ("test-command: FAIL (bwrap no existe en Windows; ejecución aislada obligatoria. "
+                                       "Para aceptar pruebas sin sandbox configura test_isolation: none en "
+                                       ".devforge/project.yaml; se aplica a los trabajos creados después)")
+                    return False, "test-command: FAIL (bwrap no está instalado; ejecución aislada obligatoria)"
+                return_code = _run_test_process(_sandbox_command(bwrap, worktree, safe_env, test_command), worktree, {})
+            else:
+                return_code = _run_windows_tests(worktree, test_command, safe_env)
+                report.append("test-isolation: none (Windows sin sandbox; entorno mínimo y perfil temporal)")
         except subprocess.TimeoutExpired:
             return False, "test-command: FAIL (excedió el límite de 30 minutos)"
         except OSError:
             return False, "test-command: FAIL (no se pudo iniciar el comando configurado)"
-        report.append(f"test-command: {'PASS' if test.returncode == 0 else 'FAIL'} (exit code {test.returncode})")
-        if test.returncode:
+        report.append(f"test-command: {'PASS' if return_code == 0 else 'FAIL'} (exit code {return_code})")
+        if return_code:
             return False, "\n".join(report)
         final_status = git(worktree, "status", "--porcelain", "--untracked-files=all", check=False)
         if final_status.returncode or final_status.stdout.strip():

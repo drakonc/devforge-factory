@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from devforge_factory import lifecycle
 from devforge_factory.core import FactoryError, git, read_job, write_job
+from support import symlinks_available
 
 
 class LifecycleTests(unittest.TestCase):
@@ -78,6 +79,7 @@ class LifecycleTests(unittest.TestCase):
                 with lifecycle.job_lock(self.folder):
                     pass
 
+    @unittest.skipUnless(symlinks_available(), "este entorno no permite crear enlaces simbólicos")
     def test_lock_symlink_is_rejected(self):
         outside = self.root / "outside.lock"
         outside.write_text("x", encoding="utf-8")

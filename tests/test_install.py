@@ -10,6 +10,9 @@ import unittest
 from unittest.mock import patch
 
 from devforge_factory.install import install_global
+from support import IS_WINDOWS
+
+SANDBOX_SKIP = "el bloque sandbox no se instala en Windows nativo"
 
 
 class InstallGlobalTests(unittest.TestCase):
@@ -23,6 +26,34 @@ class InstallGlobalTests(unittest.TestCase):
             self.assertEqual(len(list((root / "agents").glob("devforge-*.md"))), 9)
             self.assertTrue((root / "settings.json").is_file())
 
+    @unittest.skipUnless(IS_WINDOWS, "comportamiento específico de Windows")
+    def test_windows_settings_omit_the_sandbox_that_would_stop_claude_code(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": temp}):
+                message = install_global()
+            data = json.loads((Path(temp) / "settings.json").read_text(encoding="utf-8"))
+            self.assertNotIn("sandbox", data)
+            self.assertTrue(data["permissions"]["blockReadsOutsideWorkingDirectories"])
+            self.assertIn("Windows nativo", message)
+
+    @unittest.skipUnless(IS_WINDOWS, "comportamiento específico de Windows")
+    def test_windows_merge_adds_permissions_and_leaves_user_sandbox_alone(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            existing = {"keep": True, "sandbox": {"excludedCommands": ["docker"]}}
+            (root / "settings.json").write_text(json.dumps(existing), encoding="utf-8")
+            with patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": temp}):
+                message = install_global()
+                again = install_global()
+            data = json.loads((root / "settings.json").read_text(encoding="utf-8"))
+            self.assertIn("añadido", message)
+            self.assertIn("ya contiene", again)
+            self.assertTrue(data["keep"])
+            self.assertEqual(data["sandbox"], {"excludedCommands": ["docker"]})
+            self.assertIn("Read(./.env)", data["permissions"]["deny"])
+            self.assertEqual(json.loads((root / "settings.json.bak").read_text(encoding="utf-8")), existing)
+
+    @unittest.skipIf(IS_WINDOWS, SANDBOX_SKIP)
     def test_existing_settings_keep_values_and_gain_missing_ones(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -62,6 +93,7 @@ class InstallGlobalTests(unittest.TestCase):
                 self.assertIn("no es un objeto JSON legible", message)
                 self.assertEqual((root / "settings.json").read_text(encoding="utf-8"), content)
 
+    @unittest.skipIf(IS_WINDOWS, SANDBOX_SKIP)
     def test_merge_backs_up_once_and_second_run_does_not_rewrite(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -77,6 +109,7 @@ class InstallGlobalTests(unittest.TestCase):
             self.assertEqual(data["sandbox"]["excludedCommands"], ["devforge", "devforge *"])
             self.assertFalse((root / "settings.json.tmp").exists())
 
+    @unittest.skipIf(IS_WINDOWS, SANDBOX_SKIP)
     def test_script_merge_works_without_pyyaml(self):
         repo = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as temp:
@@ -94,6 +127,7 @@ class InstallGlobalTests(unittest.TestCase):
             self.assertIn("añadido", result.stdout)
             self.assertIn("devforge *", json.loads(target.read_text(encoding="utf-8"))["sandbox"]["excludedCommands"])
 
+    @unittest.skipIf(IS_WINDOWS, SANDBOX_SKIP)
     def test_mismatched_types_keep_user_value(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

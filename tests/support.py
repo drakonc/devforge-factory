@@ -1,8 +1,27 @@
 """Utilidades compartidas por las pruebas."""
 
+import os
 import shutil
 import subprocess
+import sys
+import tempfile
 from functools import lru_cache
+from pathlib import Path
+
+IS_WINDOWS = os.name == "nt"
+# En Windows no hay sandbox con /usr/bin/python3: las pruebas del gate usan el intérprete actual.
+GATE_PYTHON = sys.executable if IS_WINDOWS else "python3"
+
+
+@lru_cache(maxsize=1)
+def symlinks_available():
+    """Windows solo permite crear enlaces simbólicos con privilegios o modo desarrollador."""
+    with tempfile.TemporaryDirectory() as temp:
+        try:
+            (Path(temp) / "enlace").symlink_to(Path(temp) / "destino")
+        except (OSError, NotImplementedError):
+            return False
+    return True
 
 
 @lru_cache(maxsize=1)

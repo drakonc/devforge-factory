@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,7 +10,7 @@ from unittest.mock import patch
 import yaml
 
 from devforge_factory.core import FactoryError, create_job, extract_file, init_project, normalize, publish_draft_pr, run_gate, slugify, transition, write_job
-from support import bwrap_ready
+from support import GATE_PYTHON, IS_WINDOWS, bwrap_ready, symlinks_available
 
 
 class CoreTests(unittest.TestCase):
@@ -37,6 +38,11 @@ class CoreTests(unittest.TestCase):
             extractor = root / "pdftotext"
             extractor.write_text("#!/usr/bin/env python3\nimport sys\nsys.stdout.buffer.write(b'x' * (11 * 1024 * 1024))\n", encoding="utf-8")
             extractor.chmod(0o755)
+            if IS_WINDOWS:
+                # Windows no ejecuta scripts con shebang: un .cmd lanza el mismo extractor falso.
+                script = extractor
+                extractor = root / "pdftotext.cmd"
+                extractor.write_text(f'@"{sys.executable}" "{script}"\n', encoding="utf-8")
             with patch("devforge_factory.core.shutil.which", return_value=str(extractor)):
                 with self.assertRaisesRegex(FactoryError, "10 MiB"):
                     extract_file(pdf)
@@ -117,6 +123,91 @@ class CoreTests(unittest.TestCase):
             self.assertFalse(okay)
             self.assertIn("bwrap", report)
 
+    def _gate_job(self, temp, **fields):
+        root = Path(temp) / "repo"
+        root.mkdir()
+        subprocess.run(["git", "init", "-b", "develop"], cwd=root, check=True, capture_output=True)
+        subprocess.run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "--allow-empty", "-m", "base"], cwd=root, check=True, capture_output=True)
+        init_project(root)
+        worktree = root / ".devforge" / "worktrees" / "test-worktree"
+        subprocess.run(["git", "worktree", "add", "-b", "feature/test", str(worktree), "develop"], cwd=root, check=True, capture_output=True)
+        job = {"worktree": str(worktree), "base_branch": "develop", "quality_gates": ["tests-configured"],
+               "test_command": [GATE_PYTHON, "-c", "pass"], "test_env": [], **fields}
+        return root, job
+
+    def test_quality_gate_rejects_unknown_test_isolation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, job = self._gate_job(temp)
+            for value in ("ninguno", ["none"], None):
+                with self.subTest(value=value):
+                    okay, report = run_gate(root, {**job, "test_isolation": value})
+                    self.assertFalse(okay)
+                    self.assertIn("test_isolation: FAIL", report)
+
+    @unittest.skipIf(IS_WINDOWS, "fuera de Windows el aislamiento con bwrap es obligatorio")
+    def test_quality_gate_refuses_to_skip_the_sandbox_outside_windows(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, job = self._gate_job(temp, test_isolation="none")
+            okay, report = run_gate(root, job)
+            self.assertFalse(okay)
+            self.assertIn("solo se admite en Windows", report)
+
+    @unittest.skipUnless(IS_WINDOWS, "comportamiento específico de Windows")
+    def test_windows_quality_gate_fails_closed_without_explicit_opt_in(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, job = self._gate_job(temp)
+            with patch("devforge_factory.core.shutil.which", return_value=None):
+                okay, report = run_gate(root, job)
+            self.assertFalse(okay)
+            self.assertIn("bwrap", report)
+            self.assertIn("test_isolation: none", report)
+
+    @unittest.skipUnless(IS_WINDOWS, "comportamiento específico de Windows")
+    def test_windows_quality_gate_without_sandbox_hides_environment_and_profile(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, job = self._gate_job(temp, test_isolation="none")
+            real_profile = os.environ["USERPROFILE"]
+            check = ("import os,sys; from pathlib import Path; home=os.environ['USERPROFILE']; "
+                     f"sys.exit(1 if 'DEVFORGE_SECRET_TEST' in os.environ or home == {real_profile!r} "
+                     "or os.environ['TEMP'] != home or Path.home() != Path(home) else 0)")
+            job["test_command"] = [sys.executable, "-c", check]
+            with patch.dict("os.environ", {"DEVFORGE_SECRET_TEST": "secret-value"}):
+                okay, report = run_gate(root, job)
+            self.assertTrue(okay, report)
+            self.assertIn("test-isolation: none", report)
+            self.assertIn("test-command: PASS", report)
+            job["test_command"] = [sys.executable, "-c", "import os,sys; sys.exit(0 if os.getenv('DEVFORGE_TEST_ALLOWED') == 'available' else 1)"]
+            job["test_env"] = ["DEVFORGE_TEST_ALLOWED"]
+            with patch.dict("os.environ", {"DEVFORGE_TEST_ALLOWED": "available"}):
+                okay, _ = run_gate(root, job)
+            self.assertTrue(okay)
+            job["test_command"] = [sys.executable, "-c", "import sys; sys.exit(3)"]
+            okay, report = run_gate(root, job)
+            self.assertFalse(okay)
+            self.assertIn("test-command: FAIL (exit code 3)", report)
+            job["test_command"] = ["comando-que-no-existe-devforge"]
+            okay, report = run_gate(root, job)
+            self.assertFalse(okay)
+            self.assertIn("no se pudo iniciar", report)
+
+    @unittest.skipUnless(IS_WINDOWS, "comportamiento específico de Windows")
+    def test_windows_quality_gate_resolves_scripts_inside_the_worktree_and_detects_changes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root, job = self._gate_job(temp, test_isolation="none")
+            worktree = Path(job["worktree"])
+            (worktree / "tools").mkdir()
+            (worktree / "tools" / "probar.cmd").write_bytes(b"@exit /b 0\n")
+            (worktree / "tools" / "ensuciar.cmd").write_bytes(b"@echo x> residuo.txt\n")
+            subprocess.run(["git", "add", "."], cwd=worktree, check=True, capture_output=True)
+            subprocess.run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-m", "scripts"], cwd=worktree, check=True, capture_output=True)
+            job["test_command"] = ["tools/probar"]
+            okay, report = run_gate(root, job)
+            self.assertTrue(okay, report)
+            job["test_command"] = ["tools/ensuciar"]
+            okay, report = run_gate(root, job)
+            self.assertFalse(okay)
+            self.assertIn("modificó el worktree", report)
+
     def test_init_does_not_overwrite_existing_project_configuration(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -128,6 +219,7 @@ class CoreTests(unittest.TestCase):
                 init_project(root)
             self.assertEqual(target.read_text(encoding="utf-8"), "profile: custom\n")
 
+    @unittest.skipUnless(symlinks_available(), "este entorno no permite crear enlaces simbólicos")
     def test_init_rejects_broken_symlink_for_project_configuration(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "repo"

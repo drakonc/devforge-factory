@@ -20,6 +20,20 @@ def _resources():
     raise FactoryError("No se encontraron la skill y los agentes para instalar.")
 
 
+# Claude Code no tiene sandbox en Windows nativo y, con failIfUnavailable, se niega a arrancar.
+WINDOWS_UNSUPPORTED_SETTINGS = ("sandbox",)
+WINDOWS_SETTINGS_NOTE = "; sin el bloque sandbox, que Claude Code no admite en Windows nativo"
+
+
+def _reference_settings(reference):
+    """Lee la plantilla y descarta lo que la plataforma actual no puede aplicar."""
+    data = json.loads(reference.read_text(encoding="utf-8"))
+    if os.name == "nt":
+        for key in WINDOWS_UNSUPPORTED_SETTINGS:
+            data.pop(key, None)
+    return data
+
+
 def _identity(item):
     """Clave para comparar elementos de listas; las entradas con name/path se comparan por ese campo."""
     if isinstance(item, dict) and ("name" in item or "path" in item):
@@ -55,7 +69,7 @@ def _merge_settings(reference, target):
     if not isinstance(data, dict):
         return f"existe pero no es un objeto JSON legible; combínalo a mano con {reference}"
     added, kept = [], []
-    _merge(data, json.loads(reference.read_text(encoding="utf-8")), "", added, kept)
+    _merge(data, _reference_settings(reference), "", added, kept)
     if not added:
         note = "existe; ya contiene la configuración de referencia"
     else:
@@ -70,6 +84,8 @@ def _merge_settings(reference, target):
         note = f"existe; añadido: {', '.join(added)}; respaldo en {backup}"
     if kept:
         note += f"; se conservan tus valores en: {', '.join(kept)}"
+    if os.name == "nt":
+        note += WINDOWS_SETTINGS_NOTE
     return note
 
 
@@ -94,6 +110,9 @@ def install_global():
     target = root / "settings.json"
     if target.exists():
         note = _merge_settings(settings, target)
+    elif os.name == "nt":
+        target.write_text(json.dumps(_reference_settings(settings), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        note = "copiado" + WINDOWS_SETTINGS_NOTE
     else:
         shutil.copy2(settings, target)
         note = "copiado"
