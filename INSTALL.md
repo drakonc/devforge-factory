@@ -64,7 +64,7 @@ Eso copia la skill a `~/.claude/skills/factory`, los agentes a `~/.claude/agents
 ### Desde un repositorio interno (Azure Repos)
 
 ```bash
-uv tool install "git+https://dev.azure.com/ORG/PROYECTO/_git/devforge-factory@v0.2.0"
+uv tool install "git+https://dev.azure.com/ORG/PROYECTO/_git/devforge-factory@v0.1.1"
 devforge instalar-global
 ```
 
@@ -82,7 +82,7 @@ uv publish --publish-url https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED
 En la máquina de destino:
 
 ```bash
-uv tool install devforge-factory==0.2.0 --index https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED/pypi/simple/
+uv tool install devforge-factory==0.1.1 --index https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED/pypi/simple/
 devforge instalar-global
 ```
 
@@ -91,7 +91,7 @@ El feed debe tener también PyYAML. Configura las credenciales con el gestor de 
 ### Desde un wheel compartido
 
 ```bash
-uv tool install /ruta/compartida/devforge_factory-0.2.0-py3-none-any.whl
+uv tool install /ruta/compartida/devforge_factory-0.1.1-py3-none-any.whl
 devforge instalar-global
 ```
 
@@ -100,7 +100,7 @@ devforge instalar-global
 Descarga el wheel de DevForge y el de PyYAML en una máquina conectada, cópialos juntos y:
 
 ```bash
-uv tool install --no-index --find-links ./dist devforge-factory==0.2.0
+uv tool install --no-index --find-links ./dist devforge-factory==0.1.1
 devforge instalar-global
 ```
 
