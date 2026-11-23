@@ -45,7 +45,7 @@ La fábrica ejecuta `devforge init`, detecta la rama base y el comando de prueba
 
 Antes de delegar, confirma en Claude Code que `/sandbox` indica sandbox activo y que `/status` carga las restricciones.
 
-La configuración de referencia habilita el sandbox de Bash de Claude Code con fallo cerrado si no está disponible y bloquea las lecturas de herramientas de archivos fuera de los directorios de trabajo. Claude documenta que el sandbox de Bash no cubre las herramientas integradas de archivos, Web, MCP ni hooks; revisa los límites en la [documentación oficial de sandbox](https://code.claude.com/docs/en/sandboxing).
+La configuración de referencia habilita el sandbox de Bash de Claude Code con fallo cerrado si no está disponible. Deja `blockReadsOutsideWorkingDirectories` en `false` para que Claude no pida permiso en cada lectura fuera del proyecto; las lecturas sensibles siguen denegadas por `permissions.deny` y `sandbox.filesystem.denyRead`. Claude documenta que el sandbox de Bash no cubre las herramientas integradas de archivos, Web, MCP ni hooks; revisa los límites en la [documentación oficial de sandbox](https://code.claude.com/docs/en/sandboxing).
 
 Los worktrees se crean en `.devforge/worktrees/`, ignorado por Git. Los Quality Gates requieren `bwrap`: ejecuta las pruebas con filesystem de solo lectura salvo el worktree, HOME temporal, red aislada y solo variables explícitas en `test_env`. Si `bwrap` no está instalado o el sistema no permite crear el aislamiento, las pruebas fallan cerradas.
 
@@ -64,7 +64,7 @@ Eso copia la skill a `~/.claude/skills/factory`, los agentes a `~/.claude/agents
 ### Desde un repositorio interno (Azure Repos)
 
 ```bash
-uv tool install "git+https://dev.azure.com/ORG/PROYECTO/_git/devforge-factory@v0.1.1"
+uv tool install "git+https://dev.azure.com/ORG/PROYECTO/_git/devforge-factory@v0.1.2"
 devforge instalar-global
 ```
 
@@ -82,7 +82,7 @@ uv publish --publish-url https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED
 En la máquina de destino:
 
 ```bash
-uv tool install devforge-factory==0.1.1 --index https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED/pypi/simple/
+uv tool install devforge-factory==0.1.2 --index https://pkgs.dev.azure.com/ORG/PROYECTO/_packaging/FEED/pypi/simple/
 devforge instalar-global
 ```
 
@@ -91,7 +91,7 @@ El feed debe tener también PyYAML. Configura las credenciales con el gestor de 
 ### Desde un wheel compartido
 
 ```bash
-uv tool install /ruta/compartida/devforge_factory-0.1.1-py3-none-any.whl
+uv tool install /ruta/compartida/devforge_factory-0.1.2-py3-none-any.whl
 devforge instalar-global
 ```
 
@@ -100,7 +100,7 @@ devforge instalar-global
 Descarga el wheel de DevForge y el de PyYAML en una máquina conectada, cópialos juntos y:
 
 ```bash
-uv tool install --no-index --find-links ./dist devforge-factory==0.1.1
+uv tool install --no-index --find-links ./dist devforge-factory==0.1.2
 devforge instalar-global
 ```
 

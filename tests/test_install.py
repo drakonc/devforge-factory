@@ -33,7 +33,7 @@ class InstallGlobalTests(unittest.TestCase):
                 message = install_global()
             data = json.loads((Path(temp) / "settings.json").read_text(encoding="utf-8"))
             self.assertNotIn("sandbox", data)
-            self.assertTrue(data["permissions"]["blockReadsOutsideWorkingDirectories"])
+            self.assertFalse(data["permissions"]["blockReadsOutsideWorkingDirectories"])
             self.assertIn("Windows nativo", message)
 
     @unittest.skipUnless(IS_WINDOWS, "comportamiento específico de Windows")

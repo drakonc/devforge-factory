@@ -23,6 +23,10 @@ class SettingsTests(unittest.TestCase):
             self.assertTrue(entry.get("path"))
             self.assertIn(entry.get("mode"), {"deny", "mask"})
 
+    def test_reads_outside_project_do_not_prompt(self):
+        # Evita confirmaciones en cada lectura fuera del proyecto; los secretos siguen en deny/denyRead.
+        self.assertFalse(self.data["permissions"]["blockReadsOutsideWorkingDirectories"])
+
     def test_sandbox_fails_closed(self):
         sandbox = self.data["sandbox"]
         self.assertTrue(sandbox["enabled"])
