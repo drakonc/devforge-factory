@@ -35,4 +35,4 @@ class SettingsTests(unittest.TestCase):
 
     def test_devforge_runs_outside_claude_sandbox(self):
         # devforge crea worktrees y aísla sus tests con su propio bwrap.
-        self.assertEqual(self.data["sandbox"]["excludedCommands"], ["devforge", "devforge *"])
+        self.assertEqual(self.data["sandbox"]["excludedCommands"], ["devforge", "devforge *", "hc", "hc *"])

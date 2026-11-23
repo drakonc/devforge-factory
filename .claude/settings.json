@@ -28,7 +28,9 @@
     "allowUnsandboxedCommands": false,
     "excludedCommands": [
       "devforge",
-      "devforge *"
+      "devforge *",
+      "hc",
+      "hc *"
     ],
     "filesystem": {
       "denyRead": [

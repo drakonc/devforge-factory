@@ -77,7 +77,7 @@ class InstallGlobalTests(unittest.TestCase):
             self.assertTrue(data["keep"])
             self.assertTrue(sandbox["allowUnsandboxedCommands"])
             self.assertTrue(sandbox["enabled"])
-            self.assertEqual(sandbox["excludedCommands"], ["docker", "devforge", "devforge *"])
+            self.assertEqual(sandbox["excludedCommands"], ["docker", "devforge", "devforge *", "hc", "hc *"])
             gh = [entry for entry in sandbox["credentials"]["envVars"] if entry["name"] == "GH_TOKEN"]
             self.assertEqual(gh, [{"name": "GH_TOKEN", "mode": "mask"}])
             self.assertIn({"name": "GITHUB_TOKEN", "mode": "deny"}, sandbox["credentials"]["envVars"])
@@ -106,7 +106,7 @@ class InstallGlobalTests(unittest.TestCase):
             self.assertEqual((root / "settings.json.bak").read_text(encoding="utf-8"), original)
             self.assertEqual((root / "settings.json").read_bytes(), merged)
             data = json.loads(merged)
-            self.assertEqual(data["sandbox"]["excludedCommands"], ["devforge", "devforge *"])
+            self.assertEqual(data["sandbox"]["excludedCommands"], ["devforge", "devforge *", "hc", "hc *"])
             self.assertFalse((root / "settings.json.tmp").exists())
 
     @unittest.skipIf(IS_WINDOWS, SANDBOX_SKIP)

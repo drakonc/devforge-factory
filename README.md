@@ -26,7 +26,7 @@ Sin `uv`: `pipx install git+https://github.com/drakonc/devforge-factory`. Desde 
 
 `devforge instalar-global` instala en `~/.claude/` la skill `/factory`, los 9 agentes y la configuración de referencia de Claude Code. Si ya tienes `~/.claude/settings.json`, **lo combina sin pisar nada**: conserva tus valores, añade solo lo que falta y deja un respaldo en `settings.json.bak`.
 
-Esa configuración activa el sandbox de Bash y excluye `devforge` de él (`excludedCommands: ["devforge", "devforge *"]`), porque el CLI necesita crear worktrees en `.git/worktrees`. Las pruebas que lanza `devforge` siguen aisladas con su propio `bwrap`.
+En Linux y macOS esa configuración **activa el sandbox de Bash en todos tus proyectos** y excluye de él `devforge` y `hc` (`excludedCommands: ["devforge", "devforge *", "hc", "hc *"]`): el CLI necesita crear worktrees en `.git/worktrees` y `hc` (Herdr) escribe su bloqueo en su carpeta de estado. Las pruebas que lanza `devforge` siguen aisladas con su propio `bwrap`. Si otra herramienta deja de funcionar con «Read-only file system», exclúyela con `/sandbox exclude "<comando> *"`. En Windows nativo Claude Code no tiene sandbox y el bloque no se instala.
 
 En Windows nativo los comandos son los mismos (PowerShell o cmd). `devforge instalar-global` no escribe el bloque `sandbox`, porque Claude Code no tiene sandbox en Windows y con `failIfUnavailable` no arrancaría; sí instala la skill, los agentes y las reglas `permissions`.
 
