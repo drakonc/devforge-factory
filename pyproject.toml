@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devforge-factory"
-version = "0.1.0"
+version = "0.2.0"
 description = "Fábrica local de software orquestada por Claude Code"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -17,6 +17,7 @@ classifiers = [
   "Environment :: Console",
   "License :: OSI Approved :: MIT License",
   "Operating System :: POSIX :: Linux",
+  "Operating System :: Microsoft :: Windows",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Software Development",
